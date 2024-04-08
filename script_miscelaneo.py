@@ -35,6 +35,7 @@ try:
   from pyspark.sql.functions import corr
   from pyspark.sql.functions import when
   from pyspark.sql.functions import lit
+  from pyspark.sql.functions import regexp_replace
 except:
   print('no se importa nada de pyspark')   
 
@@ -661,19 +662,28 @@ def encoder_dummies_plus(dataframe, variables):
 # ----------REMPLAZAR TODO UN DATO SI SE ENCUENTRA UN PATRON DE CARACTERES USANDO EXPRESIONES REGULARES----------
 # ---------------------------------------------------------------------------------------------------------------
 
-def ajuste_er_remplazo_total(dato, conjunto_er):
-  for valor_a_dejar, valor_posible_er in conjunto_er:
-    dato = valor_a_dejar if re.search(valor_posible_er , dato) else dato
-  return dato
+#def ajuste_er_remplazo_total(dato, conjunto_er):
+#  for valor_a_dejar, valor_posible_er in conjunto_er:
+#    dato = valor_a_dejar if re.search(valor_posible_er , dato) else dato
+#  return dato
 
 # ----------------------------------------------------------------------------------------------------------------
-# -REMPLAZAR SOLO LA COINCIDENCIA DE UN DATO SI SE ENCUENTRA UN PATRON DE CARACTERES USANDO EXPRESIONES REGULARES-
+# ---REMPLAZAR LA COINCIDENCIA DE UN DATO SI SE ENCUENTRA UN PATRON DE CARACTERES USANDO EXPRESIONES REGULARES---
 # ----------------------------------------------------------------------------------------------------------------
 
-def ajuste_er_remplazo_parcial(dato, conjunto_er):
-  for valor_a_dejar, valor_posible_er in conjunto_er:
-    dato = re.sub(valor_posible_er, valor_a_dejar, dato)
+def ajuste_er(dato, diccionario_er):
+  for valor_a_dejar, valor_er in diccionario_er.items():
+    dato = re.sub(valor_er, valor_a_dejar, dato)
   return dato
+
+def ajuste_er_remplazo_caracteres(dataframe, columna, diccionario_er):
+   dataframe[columna] = dataframe[columna].apply(lambda dato : ajuste_er(dato,diccionario_er))
+   return dataframe
+
+def ajuste_er_remplazo_caracteres_spark(dataframe, columna, diccionario_er):
+  for valor_a_dejar, valor_posible_er in diccionario_er.items():
+      dataframe = dataframe.withColumn(columna, regexp_replace(col(columna), valor_posible_er, valor_a_dejar))
+  return dataframe
 
 # ----------------------------------------------------------------------------------------------------------------
 # ------------------ FUNCIÓN PARA CASTEAR LOS TIPOS DE DATOS DE LAS COLUMNAS DE UN DATAFRAME ---------------------
