@@ -673,7 +673,8 @@ def encoder_dummies_plus(dataframe, variables):
 
 def ajuste_er(dato, diccionario_er):
   for valor_a_dejar, valor_er in diccionario_er.items():
-    dato = re.sub(valor_er, valor_a_dejar, dato)
+    for er_i in valor_er:
+      dato = re.sub(er_i, valor_a_dejar, dato)
   return dato
 
 def ajuste_er_remplazo_caracteres(dataframe, columna, diccionario_er):
