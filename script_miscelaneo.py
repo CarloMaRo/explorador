@@ -35,6 +35,7 @@ try:
   from pyspark.sql.functions import corr
   from pyspark.sql.functions import when
   from pyspark.sql.functions import lit
+  from pyspark.sql.functions import to_date
   from pyspark.sql.functions import regexp_replace
 except:
   print('no se importa nada de pyspark')   
@@ -150,8 +151,8 @@ def cardinalidad(df_car):
   encabezados = df_car.columns.values.tolist()
   nro_filas = len(df_car)
   nro_cols  = len(df_car.columns.tolist())
-  print('NRO DE DATOS = {}'.format(nro_filas))
-  print('NRO DE COLS  = {}'.format(nro_cols))
+  print('NRO DE FILAS     = {}'.format(nro_filas))
+  print('NRO DE COLUMNAS  = {}'.format(nro_cols))
 
   tipos_de_datos = []
   for i in encabezados:
@@ -191,8 +192,8 @@ def cardinalidad_spark(df_car):
   encabezados = []
   nro_filas = df_car.count()
   nro_cols  = len(df_car.columns)
-  print('NRO DE DATOS = {}'.format(nro_filas))
-  print('NRO DE COLS  = {}'.format(nro_cols))
+  print('NRO DE FILAS     = {}'.format(nro_filas))
+  print('NRO DE COLUMNAS  = {}'.format(nro_cols))
 
   tipos_de_datos = []
   for i in df_car.dtypes:
@@ -711,6 +712,29 @@ def caster(dataframe, list_cols_cat = False, list_cols_int = False, list_cols_fl
     if list_cols_bool != False:
         for col_bool_i in list_cols_bool:
             dataframe[col_bool_i] = dataframe[col_bool_i].astype(bool)
+    return dataframe
+
+def caster_spark(dataframe, list_cols_cat = False, list_cols_int = False, list_cols_float = False, list_cols_fecha = False, list_cols_bool = False):
+    if list_cols_cat != False:
+        for col_cat_i in list_cols_cat:
+            dataframe = dataframe.withColumn(col_cat_i, expr("CAST(`"+col_cat_i+"` AS STRING)"))
+   
+    if list_cols_int != False:
+        for col_int_i in list_cols_int:
+            dataframe = dataframe.withColumn(col_int_i,   col(col_int_i).cast("int"))
+
+    if list_cols_float != False:
+        for col_float_i in list_cols_float:
+            dataframe = dataframe.withColumn(col_float_i, col(col_float_i).cast("float"))
+
+    if list_cols_fecha != False:
+        for col_fecha_i in list_cols_fecha:
+            dataframe = dataframe.withColumn(col_fecha_i, to_date(col(col_fecha_i), 'yyyy-MM-dd'))
+
+    if list_cols_bool != False:
+        for col_bool_i in list_cols_bool:
+            dataframe = dataframe(col_bool_i, when(col(col_bool_i) == 'true', True).otherwise(False))
+
     return dataframe
 
 ######################################################################################################################
