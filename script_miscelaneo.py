@@ -182,7 +182,8 @@ def cardinalidad(df_car):
     contador_i     = cont + 1
     cont_impr      = impresor_de_caracteres(elemento =  contador_i, nro_max_de_caracteres = max_cifras_contador)
 
-    print('{}) categorias = {}   |   NaNs = {}   |   Tipo de dato = {}   |   variable = {}'.format(cont_impr, categ_impr, nans_impr, tipo_dato_impr, vari_impr))
+    #print('{}) categorias = {}   |   NaNs = {}   |   Tipo de dato = {}   |   variable = {}'.format(cont_impr, categ_impr,  nans_impr, tipo_dato_impr,      vari_impr))
+    print('{}) variable = {}   |   categorias = {}   |   NaNs = {}   |   Tipo de dato = {}'.format(cont_impr,  vari_impr, categ_impr,      nans_impr, tipo_dato_impr))
 
 
 def cardinalidad_spark(df_car):
@@ -222,8 +223,8 @@ def cardinalidad_spark(df_car):
     contador_i     = cont + 1
     cont_impr      = impresor_de_caracteres(elemento =  contador_i, nro_max_de_caracteres = max_cifras_contador)
 
-    print('{}) categorias = {}   |   NaNs = {}   |   Tipo de dato = {}   |   variable = {}'.format(cont_impr, categ_impr, nans_impr, tipo_dato_impr, vari_impr))
-
+    #print('{}) categorias = {}   |   NaNs = {}   |   Tipo de dato = {}   |   variable = {}'.format(cont_impr, categ_impr, nans_impr, tipo_dato_impr, vari_impr))
+    print('{}) variable = {}   |   categorias = {}   |   NaNs = {}   |   Tipo de dato = {}'.format(cont_impr,  vari_impr, categ_impr,      nans_impr, tipo_dato_impr))
 
 # -------------------------------------------------------------------------
 # ---------------- PARA MIRAR LA CARDINALIDAD DE UNA COLUMNA --------------
