@@ -154,9 +154,9 @@ def cardinalidad(df_car):
 
   nro_datos_repetidos = df_car.duplicated().sum()
 
-  print('NRO DE COLUMNAS     = {}'.format(nro_cols))
-  print('NRO DE FILAS        = {}'.format(nro_filas))
-  print('NRO FILAS REPETIDAS = {}'.format(nro_datos_repetidos))
+  print('NRO DE COLUMNAS        = {}'.format(nro_cols))
+  print('NRO DE FILAS           = {}'.format(nro_filas))
+  print('NRO DE FILAS REPETIDAS = {}'.format(nro_datos_repetidos))
 
   tipos_de_datos = []
   for i in encabezados:
@@ -199,9 +199,9 @@ def cardinalidad_spark(df_car):
 
   nro_datos_repetidos = nro_filas - df_car.dropDuplicates().count()
 
-  print('NRO DE FILAS        = {}'.format(nro_filas))
-  print('NRO DE COLUMNAS     = {}'.format(nro_cols))
-  print('NRO FILAS REPETIDAS = {}',format(nro_datos_repetidos))
+  print('NRO DE COLUMNAS        = {}'.format(nro_cols))
+  print('NRO DE FILAS           = {}'.format(nro_filas))
+  print('NRO DE FILAS REPETIDAS = {}'.format(nro_datos_repetidos))
 
   tipos_de_datos = []
   for i in df_car.dtypes:
