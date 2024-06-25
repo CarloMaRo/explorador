@@ -785,7 +785,7 @@ def dispersor_clase(dataframe, variable_clase, nro_columnas_subplot, cols_no_gra
         imprimir_colores_clases(clases, colores_categorias)
     
     contador_graficas  = 0
-    tam                = sum(range(1,nro_de_variables)) if solo_variable_clase == False else nro_de_variables - 1    # Esta suma es para determinar el número de gráficos que se deben considerar en TOTAL
+    tam                = np.sum(range(1,nro_de_variables)) if solo_variable_clase == False else nro_de_variables - 1    # Esta suma es para determinar el número de gráficos que se deben considerar en TOTAL
     filas              = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1                                   ########################################
 
     figure, axis = plt.subplots(nrows =filas, ncols = nro_columnas_subplot, figsize = figsize_subplots)
@@ -861,6 +861,7 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_gr
 
 # _________________________________________________________________________
 # --(vars categóricas de MI interes VS vars numéricas agrupadas por suma)--
+# --VALIDAR QUE LOS DATOS NO TENGAN NaN
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
               impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15):
@@ -890,7 +891,7 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
             df_aux = dataframe[dataframe[k] == i].copy()
             #print(j)
             if   accion == 'suma':
-              valor  = sum(df_aux[j])
+              valor  = np.sum(df_aux[j])
             elif accion == 'max':
               valor  = max(df_aux[j]) 
             elif accion == 'min':
@@ -915,6 +916,7 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
             ax_i = ax
 
           if j != k:
+            #print(clases,cantidades,k +' VS '+accion+'('+ j+')')
             barras = ax_i.bar( clases, cantidades, label = k +' VS '+accion+'('+ j+')', alpha = 0.4) #bins = 10,
             
             ax_i.legend(loc="best", fontsize=20)
@@ -1215,7 +1217,7 @@ def graficador_de_FACS(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     tam                 = len(col_para_histograma)
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
-    # fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
+    fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
     axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
