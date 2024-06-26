@@ -865,7 +865,7 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_gr
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
               impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15):
-    encabezados         = dataframe.columns.tolist()
+    encabezados         = list(dataframe.columns)
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
     #tam                 = len(encabezados_nuevos)*len(variables)
