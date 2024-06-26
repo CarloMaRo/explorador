@@ -875,7 +875,7 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
     fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots) if tam > 1 else plt.subplots(figsize = figsize_subplots)
     ax      = ax.flatten() if tam > 1 else ax
   
-    numero_de_datos = len(dataframe)
+    #numero_de_datos = len(dataframe)
     cont = 0
     for k in variables:
       var_analisis    = dataframe[k]
