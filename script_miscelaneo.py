@@ -917,7 +917,8 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
 
           if j != k:
             #print(clases,cantidades,k +' VS '+accion+'('+ j+')')
-            barras = ax_i.bar( clases, cantidades, label = k +' VS '+accion+'('+ j+')', alpha = 0.4) #bins = 10,
+            mensaje = divisor_texto_renglones(k +' VS '+accion+'('+ j+')')
+            barras = ax_i.bar( clases, cantidades, label = mensaje, alpha = 0.4) #bins = 10,
             
             ax_i.legend(loc="best", fontsize=20)
             #ax_i.set_yscale('log')
@@ -933,6 +934,28 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
 
             cont += 1
     plt.tight_layout();
+
+def divisor_texto_renglones(texto_original, max_caracteres=25):
+    texto_original = texto_original.replace('_', ' ')
+    lista_palabras = texto_original.split()                                               # Dividimos el texto en palabras
+    lista_texto_final = []                                                                # Lista para almacenar las líneas resultantes
+    renglon_actual = []                                                                   # Lista para formar la línea actual
+    long_renglon_actual = 0                                                               # Longitud de la línea actual
+
+    for palabra_i in lista_palabras:
+        if long_renglon_actual + len(palabra_i) + len(renglon_actual) > max_caracteres:   # Si agregar la palabra excede la longitud máxima permitida
+            lista_texto_final.append(' '.join(renglon_actual))                            # Agrega la línea actual a las líneas
+            renglon_actual = [palabra_i]                                                  # Inicia una nueva línea con la palabra actual
+            long_renglon_actual = len(palabra_i)                                          # Reinicia la longitud de la línea actual
+        else:
+            renglon_actual.append(palabra_i)                                              # Agrega la palabra a la línea actual
+            long_renglon_actual += len(palabra_i)                                         # Incrementa la longitud de la línea actual
+
+    if renglon_actual:
+        lista_texto_final.append(' '.join(renglon_actual))  # Agrega la última línea si queda alguna palabra
+
+    texto_final = '\n'.join(lista_texto_final)
+    return texto_final
 
 def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#, total = 0):
   total   = 0
