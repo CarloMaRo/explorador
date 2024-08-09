@@ -31,12 +31,18 @@ try:
   from pyspark.sql.functions import count
   from pyspark.sql.functions import expr
   from pyspark.sql.functions import sum
+  from pyspark.sql.functions import mean
+  from pyspark.sql.functions import min
   from pyspark.sql.functions import desc
   from pyspark.sql.functions import corr
   from pyspark.sql.functions import when
   from pyspark.sql.functions import lit
   from pyspark.sql.functions import to_date
   from pyspark.sql.functions import regexp_replace
+  from pyspark.sql.functions import log
+
+  from pyspark.sql           import functions as F
+  from pyspark.sql.functions import sum, max, min, mean, stddev, count, expr
 except:
   print('no se importa nada de pyspark')   
 
@@ -434,18 +440,23 @@ def dataframe_correlacion_grafico_spark (dataframe, variables_a_comparar, variab
 
 def graficar_dataframe_correlaciones(df_matriz_correlaciones, variables_a_comparar, variables_a_dejar_en_filas = False, variable_para_ordenar = False, umbral_positivo = 0, umbral_negativo = 0):
   df_matriz_correlaciones = df_matriz_correlaciones[variables_a_comparar]
-  cm                      = sns.light_palette('green', as_cmap = True)
+  #cm                      = sns.light_palette('green', as_cmap = True)
+  cm                      = sns.color_palette('RdBu', as_cmap = True)
 
   if variables_a_dejar_en_filas  != False:
     df_matriz_correlaciones = df_matriz_correlaciones.filter(items = variables_a_dejar_en_filas, axis = 0)
 
   if variable_para_ordenar != False:
     df_matriz_correlaciones.sort_values(variable_para_ordenar, ascending = False, inplace = True)
+
+    nuevo_orden = df_matriz_correlaciones.index.tolist()
+    df_matriz_correlaciones.sort_values(nuevo_orden, axis = 1, ascending = False, inplace = True)
+
     if (umbral_positivo > 0) & (umbral_negativo < 0):
       limite_de_correlaciones(df_matriz_correlaciones, variable_para_ordenar, umbral_positivo , umbral_negativo)
       df_matriz_correlaciones = df_matriz_correlaciones[   ((df_matriz_correlaciones[variable_para_ordenar] > umbral_positivo) & (df_matriz_correlaciones[variable_para_ordenar] < 1))   |   ((df_matriz_correlaciones[variable_para_ordenar] < umbral_negativo) & (df_matriz_correlaciones[variable_para_ordenar] > -1))   ]
     
-  salida = df_matriz_correlaciones.style.background_gradient(cmap = cm)
+  salida = df_matriz_correlaciones.style.background_gradient(cmap = cm, vmin = -1, vmax = 1)
   return salida
 
 # ------------------------------------------------------------------------------
@@ -864,7 +875,21 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_gr
 # --VALIDAR QUE LOS DATOS NO TENGAN NaN
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
-              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15):
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
+   
+   barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo)
+  
+
+def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
+   
+   barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo, es_spark = True)
+
+
+def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, es_spark = False, logaritmo = False):
     encabezados         = list(dataframe.columns)
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
@@ -878,37 +903,52 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
     #numero_de_datos = len(dataframe)
     cont = 0
     for k in variables:
+      print('entramos al for 1',k)
       var_analisis    = dataframe[k]
-      clases          = var_analisis.unique()
-      
+      clases          = var_analisis.unique() if es_spark == False else dataframe.select(col(k)).distinct().select(k).rdd.flatMap(lambda x: x).collect()
+      print('     definimos las clases de',k)
+
+      datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+      clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in clases ]
+
+      print('     ajustamos los letreros de las clases de',k)
+
       for j in encabezados_nuevos:
-
+        print('     entramos al for 2',j)
         for accion in acciones:
-
+          print('           entramos al for 3',accion)
           df_aux = pd.DataFrame()
           cantidades = []
           for i in clases:
-            df_aux = dataframe[dataframe[k] == i].copy()
+            print('                 entramos al for 4',i)
+            print('                       calculamos el df auxiliar')
+            df_aux = dataframe[dataframe[k] == i].copy() if es_spark == False else dataframe.filter(col(k) == i)
+            print('                       terminamos de calcular el df auxiliar')
+            print('                       inicia la operación',accion)
             #print(j)
             if   accion == 'suma':
-              valor  = np.sum(df_aux[j])
+              valor  = np.sum(df_aux[j]) if es_spark == False else df_aux.agg(sum(col(j))).collect()[0][0]
             elif accion == 'max':
-              valor  = max(df_aux[j]) 
+              valor  = np.max(df_aux[j]) if es_spark == False else df_aux.agg(max(col(j))).collect()[0][0]
             elif accion == 'min':
-              valor  = min(df_aux[j])
+              valor  = np.min(df_aux[j]) if es_spark == False else df_aux.agg(min(col(j))).collect()[0][0]
             elif accion == 'media':
-              valor  = df_aux[j].mean()
+              valor  = np.mean(df_aux[j]) if es_spark == False else df_aux.agg(mean(col(j))).collect()[0][0]
             elif accion == 'desv_std':
-              valor  = df_aux[j].std()
+              valor  = np.std(df_aux[j]) if es_spark == False else df_aux.agg(stddev(col(j))).collect()[0][0]
             elif accion == 'mediana':
-              valor  = df_aux[j].median()
+              valor  = np.median(df_aux[j]) if es_spark == False else df_aux.approxQuantile(j, [0.5], 0.01)[0]
             elif accion == 'moda':
-              valor  = df_aux[j].mode()
+              valor  = df_aux[j].mode() if es_spark == False else df_aux.groupBy(j).count().orderBy(F.desc("count"), F.asc(j)).collect()[0][0]
             elif accion == 'contar':
-              valor  = df_aux[j].count()
-
+              valor  = np.count(df_aux[j]) if es_spark == False else df_aux.agg(count(col(j))).collect()[0][0]
+            print('                       termina la operación',accion)
             cantidades.append(valor)          
             del df_aux
+          print('                 termina el for 4')
+          
+
+          cantidades = cantidades if (~logaritmo) else np.log(cantidades) if ~es_spark else df_aux.agg(log(col(j))).collect()[0][0]
 
           try:
             ax_i = ax[cont]
@@ -916,26 +956,51 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
             ax_i = ax
 
           if j != k:
-            #print(clases,cantidades,k +' VS '+accion+'('+ j+')')
+
             mensaje = divisor_texto_renglones(k +' VS '+accion+'('+ j+')')
-            barras = ax_i.bar( clases, cantidades, label = mensaje, alpha = 0.4) #bins = 10,
-            
-            ax_i.legend(loc="best", fontsize=20)
-            #ax_i.set_yscale('log')
-            ax_i.tick_params(axis='x', labelrotation=90, labelsize=20)
-            ax_i.tick_params(axis='y', labelrotation=90, labelsize=20)
-            #ax_i.set_xlabel(i)
-            #ax_i.set_title(k +' VS '+ j, fontsize = 20)
-            ax_i.set_yticks([])
+            barras = ax_i.bar( clases_a_impr, cantidades, label = mensaje, alpha = 0.4) #bins = 10,
 
             if impr_valores:
               autoetiquetado(barras = barras, axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
                              notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores) #, total = numero_de_datos)
 
+            renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
+            print('     ',renglones_letrero_mas_grande,'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+
+            if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
+              tamanio_fuente = 40
+              tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente     
+              print('tamaño de la fuente' ,tamanio_fuente)         
+              ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+              ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+            else:
+              ax_i.tick_params(axis='x',  labelsize=20)
+              ax_i.tick_params(axis='y',  labelsize=20) 
+            """
+            tamanio_fuente = 40
+            #tamanio_fuente = ancho_barra/renglones_letrero_mas_grande*0.8 if ancho_barra and (tamanio_fuente*renglones_letrero_mas_grande > ancho_barra) else tamanio_fuente
+            tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente
+            """
+
+
+            ax_i.legend(loc="best", fontsize=20)
+            #ax_i.set_yscale('log')
+            ###########ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+            ###########ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+            #ax_i.set_xlabel(i)
+            #ax_i.set_title(k +' VS '+ j, fontsize = 20)
+            ax_i.set_yticks([])
+
             cont += 1
+        print('           termina al for 3')  
+      print('     termina al for 2')
+    print('termina al for 1')
     plt.tight_layout();
 
 def divisor_texto_renglones(texto_original, max_caracteres=25):
+    datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+    #texto_original = texto_original if isinstance(texto_original, datos_numericos) else texto_original.replace('_', ' ')
+    #lista_palabras = texto_original if isinstance(texto_original, datos_numericos) else texto_original.split()   # Dividimos el texto en palabras
     texto_original = texto_original.replace('_', ' ')
     lista_palabras = texto_original.split()                                               # Dividimos el texto en palabras
     lista_texto_final = []                                                                # Lista para almacenar las líneas resultantes
@@ -960,10 +1025,16 @@ def divisor_texto_renglones(texto_original, max_caracteres=25):
 def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#, total = 0):
   total   = 0
   alt_max = 0
+  alt_min = 0
   for cont, barra_i in enumerate(axes.patches):                   # En este "for" calculamos la altura de la barra mas alta
     altura  = barra_i.get_height()
     total   = altura + total
-    alt_max = altura if abs(altura) > abs(alt_max) else alt_max
+    #alt_max = altura if abs(altura) > abs(alt_max) else alt_max
+    #alt_min = altura if abs(altura) < abs(alt_min) else alt_min
+    alt_max = altura if altura > alt_max else alt_max
+    alt_min = altura if altura < alt_min else alt_min
+  
+  alt_max = alt_max + alt_min
 
   #print(alt_max)
   if alt_max < 2:                   # Esta es una medida arbitratia para que los letreros de las gráficas queden relativamente centrados cuando la altura de las barras es muy pequeña
@@ -1023,8 +1094,18 @@ def ajuste_etiqueta_numero(texto):
 # _________________________________________________________________________
 # ----------(vars categóricas VS vars categóricas de MI interes)-----------
 
-def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False):
-  encabezados         = dataframe.columns.tolist()
+def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False):
+   barriador_categoricas_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables,
+                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo)
+
+
+def barriador_categoricas_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False, es_spark = True):
+   barriador_categoricas_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables,
+                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo, es_spark = es_spark)
+
+
+def barriador_categoricas_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
+  encabezados         = list(dataframe.columns)
   encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
   encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
   tam                 = len(encabezados_nuevos)
@@ -1040,16 +1121,145 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
 
   for j in variables:
     for i, col in enumerate(encabezados_nuevos):
+
       try: 
         ax_i = ax[i]
       except:
         ax_i = ax
 
-      pd.crosstab(dataframe[col],dataframe[j], normalize = normalizador).plot(kind='bar', ax=ax_i, stacked = una_barra)
-      ax_i.set_xlabel(ajusta_titulo(col), fontsize = 20)
+      if es_spark:      
+        df_pandas = dataframe.crosstab(col,j).toPandas()
+        columna_indice = df_pandas.columns.tolist()[0]
+        #print(columna_indice)
+        df_pandas.index = df_pandas[columna_indice]
+        del df_pandas[columna_indice]
+        #print(df_pandas)
+      else:
+        df_pandas = pd.crosstab(dataframe[col],dataframe[j], normalize = normalizador)
+
+      if logaritmo:
+         arr_sin_ceros = df_pandas.values + 1
+         df_pandas[:] = np.log(arr_sin_ceros)
+
+      #df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
+
+      datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+      etiquetas_eje_x = [i for i in df_pandas.index.tolist()]
+      clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x ]
+      renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
+
+      df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)#, xticks = clases_a_impr)
+      #plt.xticks(ticks = clases_a_impr)
+      #ax_i.xticks(ticks = clases_a_impr)
+      ax_i.set_xticklabels(clases_a_impr)
+
+      ax_i.set_xlabel(divisor_texto_renglones(col), fontsize = 20)
       ax_i.legend(loc="best", fontsize=20)
       #ax_i.set_yscale('log')
-      ax_i.tick_params(axis='x', labelrotation=90, labelsize=20)
+
+      if ( renglones_letrero_mas_grande !=1 ) and (len(clases_a_impr)>2):
+        tamanio_fuente = 40
+        tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente              
+        ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+        ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+      else: 
+        ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
+
+      
+  plt.tight_layout();
+
+
+def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, dicc_vars_esp, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
+  encabezados         = list(dataframe.columns)
+  encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
+  encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
+
+  lista_vars_especiales = list(dicc_vars_esp.keys())
+  graf_total_esp = 0
+  for var_esp_i in lista_vars_especiales:
+    graf_total_esp += len(dicc_vars_esp[var_esp_i])
+
+  tam                 = len(encabezados_nuevos)*graf_total_esp
+  filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
+
+  fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots) if tam > 1 else plt.subplots(figsize = figsize_subplots)
+  ax      = ax.flatten() if tam > 1 else ax
+
+  if porcentaje == True:
+    normalizador = 'index'
+  else:
+    normalizador = porcentaje
+
+  for var_i in variables:
+
+    cont_graf = 0
+    for cont, col in enumerate(encabezados_nuevos):
+      
+      for var_esp_i in lista_vars_especiales:
+          
+        lista_func_especiales = dicc_vars_esp[var_esp_i]
+        dicc_aux = {}
+        for func_i in lista_func_especiales:
+          dicc_aux[var_esp_i] = [func_i]
+          
+          try: 
+            ax_i = ax[cont_graf]
+          except:
+            ax_i = ax
+
+          df_pandas = crosstab_plus(dataframe,col, var_i, dicc_colsfunc_agrupables = dicc_aux, es_spark = es_spark)
+
+          cols_actuales = df_pandas.columns
+          cols   = cols_actuales.get_level_values('columnas')
+          funcs  = cols_actuales.get_level_values('funciones')
+          clases = cols_actuales.get_level_values(var_i)
+          multi_indice = pd.MultiIndex.from_arrays( [clases, funcs, cols ], names = [var_i,"funciones","columnas"] )
+          df_pandas = pd.DataFrame(df_pandas.values, index = df_pandas.index, columns = multi_indice)
+          df_pandas.sort_index(inplace=True)
+
+
+          '''
+          if es_spark:      
+            df_pandas = dataframe.crosstab(col,var_i).toPandas()
+            columna_indice = df_pandas.columns.tolist()[0]
+            #print(columna_indice)
+            df_pandas.index = df_pandas[columna_indice]
+            del df_pandas[columna_indice]
+            #print(df_pandas)
+          else:
+            df_pandas = pd.crosstab(dataframe[col],dataframe[var_i], normalize = normalizador)
+          '''
+
+          if logaritmo:
+            arr_sin_ceros = df_pandas.values + 1
+            df_pandas[:] = np.log(arr_sin_ceros)
+
+          #df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
+
+          datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+          etiquetas_eje_x = [k for k in df_pandas.index.tolist()]
+          clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x ]
+          renglones_letrero_mas_grande = np.max([len(str(k).split('\n')) for k in clases_a_impr])
+
+          df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)#, xticks = clases_a_impr)
+          #plt.xticks(ticks = clases_a_impr)
+          #ax_i.xticks(ticks = clases_a_impr)
+          ax_i.set_xticklabels(clases_a_impr)
+
+          ax_i.set_xlabel(divisor_texto_renglones(col), fontsize = 20)
+          ax_i.legend(loc="best", fontsize=20)
+          #ax_i.set_yscale('log')
+
+          if ( renglones_letrero_mas_grande !=1 ) and (len(clases_a_impr)>2):
+            tamanio_fuente = 40
+            tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente              
+            ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+            ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+          else: 
+            ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
+
+          cont_graf += 1
+      
   plt.tight_layout();
 
 
@@ -1057,6 +1267,71 @@ def ajusta_titulo(string):
   if len(string) > 22:
     string = string[:18] + '\n' + string[18:]
   return string
+
+# -------------------------------------------------------------------------
+# ------------------------------- CROSSTAB --------------------------------
+# -------------------------------------------------------------------------
+
+def crosstab_plus(dataframe,col_1, col_2, dicc_colsfunc_agrupables = {}, es_spark = False):
+
+  if   (es_spark== False) & (len(dicc_colsfunc_agrupables) != 0):
+    cols_agrupables           = list(dicc_colsfunc_agrupables.keys())
+    df_crosstab               = dataframe.pivot_table(index=col_1, columns=col_2, values=cols_agrupables, aggfunc=dicc_colsfunc_agrupables)
+    df_crosstab.columns.names = ["columnas", "funciones", col_2]
+
+  elif (es_spark== True) & (len(dicc_colsfunc_agrupables) != 0):
+    dicc_funciones_agregacion = {
+                                  "sum": sum,
+                                  "mean": mean,
+                                  "max": max,
+                                  "min": min,
+                                  "count": count
+                                }
+
+    # Convertir el diccionario a una lista de expresiones de agregación
+    lista_func_agrupacion = []
+    for col_i, lista_func_i in dicc_colsfunc_agrupables.items():
+        for funcion_i in lista_func_i:
+            lista_func_agrupacion.append(dicc_funciones_agregacion[funcion_i](col_i).alias(f"{col_i}_{funcion_i}"))
+    #print(lista_func_agrupacion)
+
+    # Realizar el crosstab con las funciones de agregación
+    df_crosstab = dataframe.groupBy(col_1).pivot(col_2).agg(*lista_func_agrupacion).toPandas()
+    df_crosstab.index=df_crosstab[col_1]
+    del df_crosstab[col_1]
+    #print(df_crosstab)
+
+    viejas_cols = df_crosstab.columns.tolist()
+
+    nuevas_cols = []
+    for i in viejas_cols:
+      paramestros = i.split('_')
+      nuevas_cols.append('_'.join(paramestros[1:-1])+'_'+paramestros[-1]+'_'+paramestros[0])
+
+    dicc_cambio_cols = {}
+    for col_vieja_i, col_nueva_i in zip(viejas_cols,nuevas_cols):
+      dicc_cambio_cols[col_vieja_i]=col_nueva_i
+
+    df_crosstab.rename(columns = dicc_cambio_cols, inplace = True)
+    df_crosstab.sort_index(axis=1,inplace = True)
+
+    cols_actuales = df_crosstab.columns.tolist()
+
+    cols  = []
+    funcs = []
+    datos = []
+    for i in cols_actuales:
+      paramestros = i.split('_')
+      cols.append('_'.join(paramestros[0:-2]))
+      funcs.append(paramestros[-2])
+      datos.append(paramestros[-1])
+
+    multi_indice = pd.MultiIndex.from_arrays( [cols, funcs, datos], names = ["columnas", "funciones", col_2] )
+    df_crosstab = pd.DataFrame(df_crosstab.values, index = df_crosstab.index, columns = multi_indice)
+    df_crosstab.sort_index(inplace=True)
+
+  return df_crosstab
+
 
 # -------------------------------------------------------------------------
 # ------------------------------- BOXPLOTS --------------------------------
@@ -1241,7 +1516,8 @@ def graficador_de_FACS(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten()
+    axes      = axes.flatten() if len(dataframe.columns) > 1 else [axes]
+    #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
         sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para los residuos de la serie '+i, lags = rezagos_a_graficar[cont])
@@ -1263,7 +1539,8 @@ def graficador_envolvente_FACS(dataframe, nro_columnas_subplot, cols_no_graficab
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten()
+    axes      = axes.flatten() if len(dataframe.columns) > 1 else [axes]
+    #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       pd.plotting.autocorrelation_plot(dataframe[i], ax = axes[cont], label = i)
     plt.tight_layout();
@@ -1281,7 +1558,8 @@ def graficador_de_FACP(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten()
+    axes      = axes.flatten() if len(dataframe.columns) > 1 else [axes]
+    #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
         sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+i, lags = rezagos_a_graficar[cont])
