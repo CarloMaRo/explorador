@@ -2055,3 +2055,29 @@ def histogrameador_imagenes (lista_imagenes, nro_columnas_subplot, figsize_subpl
   axis[cont_imagen].legend()  # línea para mostrar los labels en la gráfica
 
   #axis[cont_imagen].set_title('imagen_'+str(cont_imagen))
+
+
+######################################################################################################################
+################## FUNCIÓN PARA ALISTAR DATA PARA REDES LSTM (UNI Y MULTIVARIANTES) ##################################
+######################################################################################################################
+
+def datos_lstm(dataframe, lista_columnas, nro_datos_por_secuencia, nro_datos_a_predecir ):
+   
+  arr                     = dataframe[lista_columnas].values
+  nro_datos_totales_serie = len(dataframe[lista_columnas])
+  #columnas = len(dataframe[lista_columnas].columns)
+
+  nro_total_de_secuencias  = nro_datos_totales_serie + 1 - (nro_datos_por_secuencia + nro_datos_a_predecir)
+
+  x = []
+  y = []
+  for secuencia_i in range(nro_total_de_secuencias):
+    pos_ini = secuencia_i
+    pos_fin = pos_ini + nro_datos_por_secuencia
+    x.append(arr[ pos_ini : pos_fin                        , : ])
+    y.append(arr[ pos_fin : pos_fin + nro_datos_a_predecir , : ])
+
+  x = np.array(x)
+  y = np.array(y)
+
+  return x, y
