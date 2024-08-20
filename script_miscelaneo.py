@@ -1492,15 +1492,21 @@ def graficador_residuos(df_serie_residuo,variable, figsize_subplot):
   axes = axes.flatten()
   encabezados_subplot =  df_serie_residuo.columns.tolist()
 
-  nro_retardos = 40                                                  # Se suele tomar 40
+  nro_retardos = 40                                                # Se suele tomar 40
   serie = df_serie_residuo[variable]
 
   axes[0].plot(serie);axes[0].set_title('Serie '+variable)
   axes[1].hist(serie);axes[1].set_title('Histograma de la Serie '+variable)
   sm.graphics.tsa.plot_acf( serie, ax = axes[2], zero = False, title = 'FACS para los residuos de la serie '+variable)
-  sm.graphics.tsa.plot_pacf(serie, ax = axes[3], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+variable)
+  if len(df_serie_residuo) < 10:
+    sm.graphics.tsa.plot_pacf(serie, ax = axes[3], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+variable, lags = 6)
+  else:
+    sm.graphics.tsa.plot_pacf(serie, ax = axes[3], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+variable)
   sm.graphics.tsa.plot_acf( serie**2, ax = axes[4], zero = False, title = 'FACS para los residuos al cuadrado, de la serie '+variable)
-  sm.graphics.tsa.plot_pacf(serie**2, ax = axes[5], zero = False, method = ('ols'), title = 'FACP para los residuos al cuadrado, de la serie '+variable)
+  if len(df_serie_residuo) < 10:
+    sm.graphics.tsa.plot_pacf(serie**2, ax = axes[5], zero = False, method = ('ols'), title = 'FACP para los residuos al cuadrado, de la serie '+variable)
+  else:
+    sm.graphics.tsa.plot_pacf(serie**2, ax = axes[5], zero = False, method = ('ols'), title = 'FACP para los residuos al cuadrado, de la serie '+variable, lags = 6)
   plt.tight_layout();               # Esto hace que los gráficos ocupen mejor el ancho de la pantalla
 
 
