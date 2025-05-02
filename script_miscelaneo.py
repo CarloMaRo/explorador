@@ -181,7 +181,7 @@ def cardinalidad(df_car):
     #nro_categ_i    = len(pd.unique(df_car[i]))
     categ_impr     = impresor_de_caracteres(elemento = nro_categ_i, nro_max_de_caracteres = max_cifras_cat)   
     
-    nro_nans_i     = df_car.isna().sum()[cont]
+    nro_nans_i     = df_car[i].isna().sum()
     nans_impr      = impresor_de_caracteres(elemento =  nro_nans_i, nro_max_de_caracteres = max_cifras_nan)
    
     tipo_de_dato   = df_car[i].dtype
@@ -1428,8 +1428,8 @@ def graficador_series(arreglo_de_dataframe, nro_columnas_subplot, figsize_subplo
 
                 if limites_x != False:                                                                 # Este if es para calcular los límites del eje "y" para plotear cuando queremos hacer zoom
                   datos_para_limites = datos[limites_x[0]:limites_x[1]]
-                  max_i = max(datos_para_limites) if j == 0 else max(max_i , max(datos_para_limites))
-                  min_i = min(datos_para_limites) if j == 0 else min(min_i , min(datos_para_limites))
+                  max_i = datos_para_limites.max() if j == 0 else max(max_i , datos_para_limites.max())
+                  min_i = datos_para_limites.min() if j == 0 else min(min_i , datos_para_limites.min())
                   #print('DATAFRAME',j+1,' | VARIABLE',variable,' | ',max_i,min_i)         
 
 
