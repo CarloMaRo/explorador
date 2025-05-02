@@ -1605,7 +1605,7 @@ def calculador_periodos(arr_picos_frec):
     return arr_picos_periodos
 
 
-def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo):  
+def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo, tamanio_letra = 12):  
   picos_de_tiempo = calculador_periodos(x[arr_pico])
   picos_en_frec   = [recorto_decimales(k) for k in x[arr_pico]]
   picos_de_tiempo = [recorto_decimales(k) for k in picos_de_tiempo]
@@ -1615,7 +1615,7 @@ def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo):
   ax.set_yscale('log')
   ax.set_xlabel("Frecuencia")
   ax.set_ylabel("Potencia")
-  ax.legend(fontsize = 12)
+  ax.legend(fontsize = tamanio_letra)
 
   if (limites_x != False):# & (limites_y != False):
     ax.set(xlim = limites_x)
@@ -1624,7 +1624,7 @@ def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo):
 
 
 import scipy.signal as ss
-def espectros(dataframe, muestras_por_unidad_de_tiempo = 1, unidad_de_tiempo = '', nro_columnas_subplot = 1, cols_no_graficables = [], altura_picos = [], nro_picos_a_graficar = [], figsize_subplots = (), limites_eje_x = []):
+def espectros(dataframe, muestras_por_unidad_de_tiempo = 1, unidad_de_tiempo = '', nro_columnas_subplot = 1, cols_no_graficables = [], altura_picos = [], nro_picos_a_graficar = [], figsize_subplots = (), limites_eje_x = [], tamanio_letra = 12):
   encabezados           = dataframe.columns.tolist()
   encabezados           = [i for i in encabezados if i not in cols_no_graficables]
   #print(encabezados)
@@ -1672,7 +1672,7 @@ def espectros(dataframe, muestras_por_unidad_de_tiempo = 1, unidad_de_tiempo = '
       axis_i = axis[cont]
     except:
       axis_i = axis
-    graficador_espectro(x = frec, y = np.abs(pot), arr_pico = picos, ax = axis_i, limites_x = limites_eje_x, variable = var, unidad_tiempo = unidad_de_tiempo)
+    graficador_espectro(x = frec, y = np.abs(pot), arr_pico = picos, ax = axis_i, limites_x = limites_eje_x, variable = var, unidad_tiempo = unidad_de_tiempo, tamanio_letra = tamanio_letra)
   
 
 def encuentro_indices_maximos(arreglo, N):
