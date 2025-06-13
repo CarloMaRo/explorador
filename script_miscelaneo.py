@@ -181,7 +181,7 @@ def cardinalidad(df_car):
     #nro_categ_i    = len(pd.unique(df_car[i]))
     categ_impr     = impresor_de_caracteres(elemento = nro_categ_i, nro_max_de_caracteres = max_cifras_cat)   
     
-    nro_nans_i     = df_car[i].isna().sum()
+    nro_nans_i     = df_car.isna().sum()[cont]
     nans_impr      = impresor_de_caracteres(elemento =  nro_nans_i, nro_max_de_caracteres = max_cifras_nan)
    
     tipo_de_dato   = df_car[i].dtype
@@ -368,7 +368,7 @@ def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fue
 
 def imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
   plt.subplots(figsize=(dims_hor,dims_vert))
-  sns.set(font_scale=tamanio_fuente)
+  sns.set_theme(font_scale=tamanio_fuente)
   heat_map = sns.heatmap(df_matriz_correlaciones, linewidths=.05, cmap = 'RdBu', vmin = -1, vmax =1, annot = True)
    
 def matriz_correlaciones_spark(dataframe):
@@ -1428,8 +1428,8 @@ def graficador_series(arreglo_de_dataframe, nro_columnas_subplot, figsize_subplo
 
                 if limites_x != False:                                                                 # Este if es para calcular los límites del eje "y" para plotear cuando queremos hacer zoom
                   datos_para_limites = datos[limites_x[0]:limites_x[1]]
-                  max_i = datos_para_limites.max() if j == 0 else max(max_i , datos_para_limites.max())
-                  min_i = datos_para_limites.min() if j == 0 else min(min_i , datos_para_limites.min())
+                  max_i = max(datos_para_limites) if j == 0 else max(max_i , max(datos_para_limites))
+                  min_i = min(datos_para_limites) if j == 0 else min(min_i , min(datos_para_limites))
                   #print('DATAFRAME',j+1,' | VARIABLE',variable,' | ',max_i,min_i)         
 
 
@@ -1487,7 +1487,18 @@ def descomposicion_temporal(dataframe, parametro):
 # -------------------------------------------------------------------------
 
 
-def graficador_residuos(df_serie_residuo,variable, figsize_subplot):
+def graficador_residuos(df_serie_residuo,variable, figsize_subplot, verbose = False):
+
+  if verbose:
+     print('- Función para graficar los residuos de una predicción en una serie de tiempo')
+     print('- El dataframe "df_serie_residuo" debe ser un dataframe que contenga en alguna columna')
+     print('el residuo de la predicción, es decir "yreal-ypred"')
+     print('- Al estar graficando residuos, es de esperarse que sea una serie aleatoria que no tenga')
+     print('ningún patrón, ni estacionalidad, ni tendencia aparente/visible (como el ruido). Esto')
+     print('debe apreciarse en los correlogramas al no evidenciar ningún tipo de relevancia en ningún "lag"')
+     print('- Al ser los residuos una serie aleatoria, debe tener un histograma de campana (los residuos')
+     print('son similares al ruido) y por ende se esperaría un comportamiento normal')
+
   fid, axes = plt.subplots(nrows = 3, ncols = 2, dpi = 120, figsize = figsize_subplot)
   axes = axes.flatten()
   encabezados_subplot =  df_serie_residuo.columns.tolist()
@@ -1605,7 +1616,7 @@ def calculador_periodos(arr_picos_frec):
     return arr_picos_periodos
 
 
-def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo, tamanio_letra = 12):  
+def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo):  
   picos_de_tiempo = calculador_periodos(x[arr_pico])
   picos_en_frec   = [recorto_decimales(k) for k in x[arr_pico]]
   picos_de_tiempo = [recorto_decimales(k) for k in picos_de_tiempo]
@@ -1615,7 +1626,7 @@ def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo, ta
   ax.set_yscale('log')
   ax.set_xlabel("Frecuencia")
   ax.set_ylabel("Potencia")
-  ax.legend(fontsize = tamanio_letra)
+  ax.legend(fontsize = 12)
 
   if (limites_x != False):# & (limites_y != False):
     ax.set(xlim = limites_x)
@@ -1624,7 +1635,7 @@ def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo, ta
 
 
 import scipy.signal as ss
-def espectros(dataframe, muestras_por_unidad_de_tiempo = 1, unidad_de_tiempo = '', nro_columnas_subplot = 1, cols_no_graficables = [], altura_picos = [], nro_picos_a_graficar = [], figsize_subplots = (), limites_eje_x = [], tamanio_letra = 12):
+def espectros(dataframe, muestras_por_unidad_de_tiempo = 1, unidad_de_tiempo = '', nro_columnas_subplot = 1, cols_no_graficables = [], altura_picos = [], nro_picos_a_graficar = [], figsize_subplots = (), limites_eje_x = []):
   encabezados           = dataframe.columns.tolist()
   encabezados           = [i for i in encabezados if i not in cols_no_graficables]
   #print(encabezados)
@@ -1672,7 +1683,7 @@ def espectros(dataframe, muestras_por_unidad_de_tiempo = 1, unidad_de_tiempo = '
       axis_i = axis[cont]
     except:
       axis_i = axis
-    graficador_espectro(x = frec, y = np.abs(pot), arr_pico = picos, ax = axis_i, limites_x = limites_eje_x, variable = var, unidad_tiempo = unidad_de_tiempo, tamanio_letra = tamanio_letra)
+    graficador_espectro(x = frec, y = np.abs(pot), arr_pico = picos, ax = axis_i, limites_x = limites_eje_x, variable = var, unidad_tiempo = unidad_de_tiempo)
   
 
 def encuentro_indices_maximos(arreglo, N):
