@@ -1537,9 +1537,9 @@ def graficador_de_FACS(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
-        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para los residuos de la serie '+i, lags = rezagos_a_graficar[cont])
+        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS de la serie '+i, lags = rezagos_a_graficar[cont])
       else:
-        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para los residuos de la serie '+i)
+        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS de la serie '+i)
 
     plt.tight_layout();
 
@@ -1579,9 +1579,9 @@ def graficador_de_FACP(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
-        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+i, lags = rezagos_a_graficar[cont])
+        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP de la serie '+i, lags = rezagos_a_graficar[cont])
       else:
-        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+i) 
+        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP de la serie '+i) 
     plt.tight_layout();
 
 
