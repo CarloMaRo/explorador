@@ -1427,9 +1427,13 @@ def graficador_series(arreglo_de_dataframe, nro_columnas_subplot, figsize_subplo
                 ax_i.plot(datos, label = variable)
 
                 if limites_x != False:                                                                 # Este if es para calcular los límites del eje "y" para plotear cuando queremos hacer zoom
-                  datos_para_limites = datos[limites_x[0]:limites_x[1]]
-                  max_i = max(datos_para_limites) if j == 0 else max(max_i , max(datos_para_limites))
-                  min_i = min(datos_para_limites) if j == 0 else min(min_i , min(datos_para_limites))
+                  datos_para_limites = datos[limites_x[0]:limites_x[1]].values
+                  try:
+                    max_i = max(datos_para_limites) if j == 0 else max(max_i , max(datos_para_limites))
+                    min_i = min(datos_para_limites) if j == 0 else min(min_i , min(datos_para_limites))
+                  except:
+                    max_i = datos_para_limites.max() if j == 0 else max(max_i , datos_para_limites.max())
+                    min_i = datos_para_limites.min() if j == 0 else min(min_i , datos_para_limites.min())          
                   #print('DATAFRAME',j+1,' | VARIABLE',variable,' | ',max_i,min_i)         
 
 
