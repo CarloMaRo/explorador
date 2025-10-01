@@ -1231,7 +1231,7 @@ def graficador_de_FACS(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     tam                 = len(col_para_histograma)
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
-    # fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
+    fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
     axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
