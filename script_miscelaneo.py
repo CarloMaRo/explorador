@@ -25,7 +25,7 @@ from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import r2_score
 
 import cv2
-
+'''
 try:
   from pyspark.sql.functions import col
   from pyspark.sql.functions import count
@@ -39,7 +39,7 @@ try:
   from pyspark.sql.functions import regexp_replace
 except:
   print('no se importa nada de pyspark')   
-
+'''
 
 
 ######################################################################################################################
@@ -380,7 +380,7 @@ def imprimir_matriz_correlaciones(lista_corr_matriz, lista_vars, nro_columnas_su
                 contador_graficas += 1
     plt.tight_layout();
    
-   
+
 def matriz_correlaciones_spark(dataframe):
 
   cols_NO_numericas  = ['string', 'date', 'boolean']
