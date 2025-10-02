@@ -879,7 +879,7 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_gr
 # --(vars categóricas de MI interes VS vars numéricas agrupadas por suma)--
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
-              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, tamanio_fuente = 5, nro_decimales=2):
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, tamanio_fuente = 5, nro_decimales=2, imprimir_porcentaje= True):
     encabezados         = dataframe.columns.tolist()
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
@@ -943,12 +943,12 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
 
             if impr_valores:
               autoetiquetado(barras = barras, axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
-                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores, nro_decimales = nro_decimales) #, total = numero_de_datos)
+                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores, nro_decimales = nro_decimales, imprimir_porcentaje = imprimir_porcentaje) #, total = numero_de_datos)
 
             cont += 1
     plt.tight_layout();
 
-def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros, nro_decimales):#, total = 0):
+def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros, nro_decimales, imprimir_porcentaje):#, total = 0):
   total   = 0
   alt_max = 0
   for cont, barra_i in enumerate(axes.patches):                   # En este "for" calculamos la altura de la barra mas alta
@@ -976,7 +976,8 @@ def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letr
 
     #print(type(altura_barra), altura_barra_i,end = '-')
     #print(type(etiqueta), etiqueta)
-    texto          = '\n '+etiqueta.format(altura_barra)+'  \n {:2.2%}'.format(altura_barra_i/total ) if total != 0 else '{:.2f}'.format(altura_barra_i)
+    texto = '\n '+etiqueta.format(altura_barra)+'  \n {:2.2%}'.format(altura_barra_i/total ) if imprimir_porcentaje else '\n '+etiqueta.format(altura_barra)
+    texto = texto if total != 0 else '{:.2f}'.format(altura_barra_i)
 
     axes.annotate(
                   texto,
