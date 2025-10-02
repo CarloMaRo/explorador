@@ -994,19 +994,19 @@ def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letr
 def ajuste_etiqueta_numero(texto, nro_decimales):
     valor = float(texto)
     if abs(valor) < 1e3:
-      etiqueta = '{:.'+nro_decimales+'f}'
+      etiqueta = '{:.'+str(nro_decimales)+'f}'
     elif ( 1e3 <= abs(valor) ) & ( abs(valor) < 1e6 ):
       valor = valor / 1e3
-      etiqueta = '{:.'+nro_decimales+'f} Mil'
+      etiqueta = '{:.'+str(nro_decimales)+'f} Mil'
     elif ( 1e6 <= abs(valor) ) & ( abs(valor) < 1e9 ):
       valor = valor / 1e6
-      etiqueta = '{:.'+nro_decimales+'f} Millones'        
+      etiqueta = '{:.'+str(nro_decimales)+'f} Millones'        
     elif ( 1e9 <= abs(valor) ) & ( abs(valor) < 1e12 ):
       valor = valor / 1e9
-      etiqueta = '{:.'+nro_decimales+'f} MilMillones'
+      etiqueta = '{:.'+str(nro_decimales)+'f} MilMillones'
     elif ( 1e12 <= abs(valor) ) :
       valor = valor / 1e12
-      etiqueta = '{:.'+nro_decimales+'f} Billones'
+      etiqueta = '{:.'+str(nro_decimales)+'f} Billones'
     
     #print(valor, etiqueta)
     #print(type(valor), type(etiqueta))
