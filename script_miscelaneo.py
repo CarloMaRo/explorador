@@ -879,7 +879,7 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_gr
 # --(vars categóricas de MI interes VS vars numéricas agrupadas por suma)--
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
-              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15):
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, tamanio_fuente = 5):
     encabezados         = dataframe.columns.tolist()
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
@@ -933,10 +933,10 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
           if j != k:
             barras = ax_i.bar( clases, cantidades, label = k +' VS '+accion+'('+ j+')', alpha = 0.4) #bins = 10,
             
-            ax_i.legend(loc="best", fontsize=20)
+            ax_i.legend(loc="best", fontsize=tamanio_fuente)
             #ax_i.set_yscale('log')
-            ax_i.tick_params(axis='x', labelrotation=90, labelsize=20)
-            ax_i.tick_params(axis='y', labelrotation=90, labelsize=20)
+            ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+            ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
             #ax_i.set_xlabel(i)
             #ax_i.set_title(k +' VS '+ j, fontsize = 20)
             ax_i.set_yticks([])
