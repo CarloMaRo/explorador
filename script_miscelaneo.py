@@ -879,7 +879,7 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_gr
 # --(vars categóricas de MI interes VS vars numéricas agrupadas por suma)--
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
-              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, tamanio_fuente = 5):
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, tamanio_fuente = 5, nro_decimales=2):
     encabezados         = dataframe.columns.tolist()
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
@@ -943,12 +943,12 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
 
             if impr_valores:
               autoetiquetado(barras = barras, axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
-                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores) #, total = numero_de_datos)
+                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores, nro_decimales = nro_decimales) #, total = numero_de_datos)
 
             cont += 1
     plt.tight_layout();
 
-def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#, total = 0):
+def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros, nro_decimales):#, total = 0):
   total   = 0
   alt_max = 0
   for cont, barra_i in enumerate(axes.patches):                   # En este "for" calculamos la altura de la barra mas alta
@@ -970,7 +970,7 @@ def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letr
        altura_barra = altura_barra_i
        etiqueta = '{:.2E}'    # cuando esto se toma, se imprimen los resultados en notación científica
     else:
-       tupla = ajuste_etiqueta_numero(altura_barra_i)
+       tupla = ajuste_etiqueta_numero(altura_barra_i, nro_decimales)
        altura_barra = float(tupla[0])
        etiqueta     = tupla[1]
 
@@ -991,22 +991,22 @@ def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letr
                   color      = 'k' #'white
                   )
 
-def ajuste_etiqueta_numero(texto):
+def ajuste_etiqueta_numero(texto, nro_decimales):
     valor = float(texto)
     if abs(valor) < 1e3:
-      etiqueta = '{}'
+      etiqueta = '{:.'+nro_decimales+'f}'
     elif ( 1e3 <= abs(valor) ) & ( abs(valor) < 1e6 ):
       valor = valor / 1e3
-      etiqueta = '{:.1f} Mil'
+      etiqueta = '{:.'+nro_decimales+'f} Mil'
     elif ( 1e6 <= abs(valor) ) & ( abs(valor) < 1e9 ):
       valor = valor / 1e6
-      etiqueta = '{:.1f} Millones'        
+      etiqueta = '{:.'+nro_decimales+'f} Millones'        
     elif ( 1e9 <= abs(valor) ) & ( abs(valor) < 1e12 ):
       valor = valor / 1e9
-      etiqueta = '{:.1f} MilMillones'
+      etiqueta = '{:.'+nro_decimales+'f} MilMillones'
     elif ( 1e12 <= abs(valor) ) :
       valor = valor / 1e12
-      etiqueta = '{:.1f} Billones'
+      etiqueta = '{:.'+nro_decimales+'f} Billones'
     
     #print(valor, etiqueta)
     #print(type(valor), type(etiqueta))
