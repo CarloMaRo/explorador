@@ -457,7 +457,7 @@ def graficar_dataframe_correlaciones(df_matriz_correlaciones, variables_a_compar
 
   if variable_para_ordenar != False:
     df_matriz_correlaciones.sort_values(variable_para_ordenar, ascending = False, inplace = True)
-    df_matriz_correlaciones.reindex(columns = df_matriz_correlaciones.index, inplace = True)
+    df_matriz_correlaciones = df_matriz_correlaciones.reindex(columns = df_matriz_correlaciones.index)
     if (umbral_positivo > 0) & (umbral_negativo < 0):
       limite_de_correlaciones(df_matriz_correlaciones, variable_para_ordenar, umbral_positivo , umbral_negativo)
       df_matriz_correlaciones = df_matriz_correlaciones[   ((df_matriz_correlaciones[variable_para_ordenar] > umbral_positivo) & (df_matriz_correlaciones[variable_para_ordenar] < 1))   |   ((df_matriz_correlaciones[variable_para_ordenar] < umbral_negativo) & (df_matriz_correlaciones[variable_para_ordenar] > -1))   ]
