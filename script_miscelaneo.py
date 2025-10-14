@@ -1437,6 +1437,10 @@ def test_dickey_fuller(dataframe):
     print('   Nro de lags           = ',resultados[2],'(estos son el número de retardos que mediante una regresión, se usaron para calcular el estadístico de prueba, cuando no hay autocorrelaciones, se regresa 0)')
     print('   Nro de observaciones  = ',resultados[3],'(número de observaciones usadas en el análisis)')
     print('alpha_1 =  1%    |    valor crítico_1 = -3.43\nalpha_2 =  5%    |    valor crítico_2 = -2.86\nalpha_3 = 10%    |    valor crítico_3 = -2.56')
+    result_1 = 'La serie SI es estacionaria con  1% de significancia (99% de confianza)' if resultados[1] < 0.01 else 'La serie NO es estacionaria con  1% de significancia (99% de confianza)'
+    result_2 = 'La serie SI es estacionaria con  5% de significancia (95% de confianza)' if resultados[1] < 0.05 else 'La serie NO es estacionaria con  5% de significancia (95% de confianza)'
+    result_3 = 'La serie SI es estacionaria con 10% de significancia (90% de confianza)' if resultados[1] < 0.10 else 'La serie NO es estacionaria con 10% de significancia (90% de confianza)'
+    print(result_1,'\n',result_2,'\n',result_3)
 
 # _________________________________________________________________________
 # ----------------------(Pvalor para varias variables)---------------------
