@@ -461,7 +461,7 @@ def graficar_dataframe_correlaciones(df_matriz_correlaciones, variables_a_compar
       limite_de_correlaciones(df_matriz_correlaciones, variable_para_ordenar, umbral_positivo , umbral_negativo)
       df_matriz_correlaciones = df_matriz_correlaciones[   ((df_matriz_correlaciones[variable_para_ordenar] > umbral_positivo) & (df_matriz_correlaciones[variable_para_ordenar] < 1))   |   ((df_matriz_correlaciones[variable_para_ordenar] < umbral_negativo) & (df_matriz_correlaciones[variable_para_ordenar] > -1))   ]
     
-  salida = df_matriz_correlaciones.style.background_gradient(cmap = cm)
+  salida = df_matriz_correlaciones.style.background_gradient(cmap = cm, vmin=-1, vmax=1)
   return salida
 
 # ------------------------------------------------------------------------------
