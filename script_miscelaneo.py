@@ -1233,7 +1233,7 @@ def graficador_de_FACS(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten()
+    axes      = axes.flatten()  if len(encabezados) > 1 else [axes]
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
         sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para los residuos de la serie '+i, lags = rezagos_a_graficar[cont])
@@ -1255,7 +1255,7 @@ def graficador_envolvente_FACS(dataframe, nro_columnas_subplot, cols_no_graficab
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten()
+    axes      = axes.flatten() if len(encabezados) > 1 else [axes]
     for cont, i in enumerate(col_para_histograma):
       pd.plotting.autocorrelation_plot(dataframe[i], ax = axes[cont], label = i)
     plt.tight_layout();
@@ -1273,7 +1273,7 @@ def graficador_de_FACP(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten()
+    axes      = axes.flatten() if len(encabezados) > 1 else [axes]
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
         sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+i, lags = rezagos_a_graficar[cont])
