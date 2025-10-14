@@ -451,7 +451,7 @@ def dataframe_correlacion_grafico_spark (dataframe, variables_a_comparar, variab
 def graficar_dataframe_correlaciones(df_matriz_correlaciones, variables_a_comparar, variables_a_dejar_en_filas = False, variable_para_ordenar = False, umbral_positivo = 0, umbral_negativo = 0):
   df_matriz_correlaciones = df_matriz_correlaciones[variables_a_comparar]
   #cm                      = sns.light_palette('green', as_cmap = True)
-  cm                      = sns.light_palette('RdBu', as_cmap = True)
+  cm                      = 'RdBu'#sns.light_palette('RdBu', as_cmap = True)
   if variables_a_dejar_en_filas  != False:
     df_matriz_correlaciones = df_matriz_correlaciones.filter(items = variables_a_dejar_en_filas, axis = 0)
 
