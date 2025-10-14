@@ -1426,21 +1426,27 @@ def recorto_decimales(num, nro_decimales = 2):
 # _________________________________________________________________________
 # --------------------(Test completo para varias variables)----------------
 
-def test_dickey_fuller(dataframe):
+def test_dickey_fuller(dataframe, imprimir = True, retorna_pvalor = False):
   encabezados_df = dataframe.columns.tolist()
+  p_valores = {}
   for i in encabezados_df:
     resultados = sts.adfuller(dataframe[i])
-    print('\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX VARIABLE ',i,'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-    print('Ho : La serie NO es estacionaria\nHA : La serie SI es estacionaria')
-    print('   Estadístico de prueba = ',resultados[0],'(estad de prueba < valor crítico, entonces se rechaa la hipótesis nula)')
-    print('   P-valor               = ',resultados[1],'(         pvalor < alpha        , entonces se rechaa la hipótesis nula)')
-    print('   Nro de lags           = ',resultados[2],'(estos son el número de retardos que mediante una regresión, se usaron para calcular el estadístico de prueba, cuando no hay autocorrelaciones, se regresa 0)')
-    print('   Nro de observaciones  = ',resultados[3],'(número de observaciones usadas en el análisis)')
-    print('alpha_1 =  1%    |    valor crítico_1 = -3.43\nalpha_2 =  5%    |    valor crítico_2 = -2.86\nalpha_3 = 10%    |    valor crítico_3 = -2.56')
-    result_1 = 'La serie SI es estacionaria con  1% de significancia (99% de confianza)' if resultados[1] < 0.01 else 'La serie NO es estacionaria con  1% de significancia (99% de confianza)'
-    result_2 = 'La serie SI es estacionaria con  5% de significancia (95% de confianza)' if resultados[1] < 0.05 else 'La serie NO es estacionaria con  5% de significancia (95% de confianza)'
-    result_3 = 'La serie SI es estacionaria con 10% de significancia (90% de confianza)' if resultados[1] < 0.10 else 'La serie NO es estacionaria con 10% de significancia (90% de confianza)'
-    print(result_1,'\n',result_2,'\n',result_3)
+    if imprimir:
+      print('\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX VARIABLE ',i,'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+      print('Ho : La serie NO es estacionaria\nHA : La serie SI es estacionaria')
+      print('   Estadístico de prueba = ',resultados[0],'(estad de prueba < valor crítico, entonces se rechaa la hipótesis nula)')
+      print('   P-valor               = ',resultados[1],'(         pvalor < alpha        , entonces se rechaa la hipótesis nula)')
+      print('   Nro de lags           = ',resultados[2],'(estos son el número de retardos que mediante una regresión, se usaron para calcular el estadístico de prueba, cuando no hay autocorrelaciones, se regresa 0)')
+      print('   Nro de observaciones  = ',resultados[3],'(número de observaciones usadas en el análisis)')
+      print('alpha_1 =  1%    |    valor crítico_1 = -3.43\nalpha_2 =  5%    |    valor crítico_2 = -2.86\nalpha_3 = 10%    |    valor crítico_3 = -2.56')
+      result_1 = 'La serie SI es estacionaria con  1% de significancia (99% de confianza)' if resultados[1] < 0.01 else 'La serie NO es estacionaria con  1% de significancia (99% de confianza)'
+      result_2 = 'La serie SI es estacionaria con  5% de significancia (95% de confianza)' if resultados[1] < 0.05 else 'La serie NO es estacionaria con  5% de significancia (95% de confianza)'
+      result_3 = 'La serie SI es estacionaria con 10% de significancia (90% de confianza)' if resultados[1] < 0.10 else 'La serie NO es estacionaria con 10% de significancia (90% de confianza)'
+      print(' ',result_1,'\n',result_2,'\n',result_3)
+    if retorna_pvalor==True:
+      p_valores[i] = resultados[1]
+  if retorna_pvalor==True:
+    return p_valores # retornamos el p-valor
 
 # _________________________________________________________________________
 # ----------------------(Pvalor para varias variables)---------------------
