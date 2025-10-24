@@ -1225,7 +1225,7 @@ def encontrar_parámetros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 2
   d, serie_diferenciada, _ = encontrar_nro_diferencias_d(serie_univariante, max_d=max_d, alpha=alpha)
 
   autocorr_FACS,  intervalo_confianza_FACS, _,  pvalores_FACS = acf( serie_diferenciada, nlags=len(serie_diferenciada), alpha=alpha, qstat = True)
-  orden_q_Q_S = seleccion_ordenes(interv_facs, corr_facs)
+  orden_q_Q_S = seleccion_ordenes(autocorr_FACS, intervalo_confianza_FACS)
   #print(corr_facs)
   q  = orden_q_Q_S[0]
   Q  = orden_q_Q_S[1][0]
