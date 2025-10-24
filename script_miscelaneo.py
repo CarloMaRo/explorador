@@ -16,6 +16,8 @@ from statsmodels.tsa.api                import VAR                # Esto es para
 from statsmodels.tsa.seasonal           import seasonal_decompose
 from statsmodels.tsa.stattools          import grangercausalitytests  # Este sirve para crear la MATRIZ de causalidad de granger
 from scipy.stats.distributions          import chi2
+from statsmodels.tsa.stattools import acf, pacf, adfuller
+from scipy.stats import norm
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -1199,6 +1201,119 @@ def descomposicion_temporal(dataframe, parametro):
     df_auxiliar[i] = descomposicion.trend if parametro == 'tendencia' else descomposicion.seasonal if parametro == 'estacional' else descomposicion.resid if parametro == 'residuo' else print('PARÁMETRO ERRÓNEAMENTE ELEGIDO')
   return df_auxiliar
 
+# ----------------------------------------------------------------------------------
+# - Para encontrarar nro de diferencias requeridas pa volver la serie estacionaria -
+# ----------------------------------------------------------------------------------
+
+def encontrar_nro_diferencias_d(serie, max_d=3, alpha=0.05):
+    d = 0
+    serie_limpia = serie.dropna()
+    while d < max_d:
+        resultado_test_dickeyfuller = adfuller(serie_limpia)
+        p_valor_test_dickeyfuller = resultado_test_dickeyfuller[1]
+        if p_valor_test_dickeyfuller < alpha:
+            return d, serie_limpia, p_valor_test_dickeyfuller
+        serie_limpia = serie_limpia.diff().dropna()
+        d += 1
+    return d, serie_limpia, p_valor_test_dickeyfuller
+
+# ---------------------------------------------------------------------------------
+# -- Para encontrar los rezagos de alguna función de autocorrelación FACS o FACP --
+# ---------------------------------------------------------------------------------
+
+def encontrar_parámetros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 20, max_d = 3, max_p = 3, max_q = 3):
+  d, serie_diferenciada, _ = encontrar_nro_diferencias_d(serie_univariante, max_d=max_d, alpha=alpha)
+
+  autocorr_FACS,  intervalo_confianza_FACS, _,  pvalores_FACS = acf( serie_diferenciada, nlags=len(serie_diferenciada), alpha=alpha, qstat = True)
+  orden_q_Q_S = seleccion_ordenes(interv_facs, corr_facs)
+  #print(corr_facs)
+  q  = orden_q_Q_S[0]
+  Q  = orden_q_Q_S[1][0]
+  SQ = orden_q_Q_S[1][1]
+
+  autocorr_FACP,  intervalo_confianza_FACP                    = pacf(serie_diferenciada, alpha=0.05, method = 'ols')
+  corr_facp,  interv_facp = pacf(serie_diferenciada, alpha=0.05)#, method = 'ols')
+  orden_p_P_S = seleccion_ordenes(interv_facp, corr_facp)
+  #print(corr_facp)
+  p  = orden_p_P_S[0]
+  P  = orden_p_P_S[1][0]
+  SP = orden_p_P_S[1][1]
+
+  if Q>0 and P==0:
+      S =SQ
+  elif P>0 and Q==0:
+      S = SP
+  elif P>0 and Q>0:
+      S = SP if P<Q else SQ
+  elif Q == 0 and P == 0:
+      S= 0
+
+  print("(",p,d,q,")(",P,"0",Q,")(",S,")")
+  return [(p,d,q),(P,0,Q),(S)]
+
+def seleccion_ordenes(interv, corr):
+  arr_rezagos_bool = np.where(interv[:,1]-corr <= np.abs(corr), True, False)
+
+  rezagos_validos_testH = [cont for cont in range(len(arr_rezagos_bool)) if (cont>0)& (arr_rezagos_bool[cont])]
+  rezagos_validos_testH.append(0)
+  #print('booleano                ',arr_rezagos_bool)
+  #print('rezagos_validos_testH   ',rezagos_validos_testH)
+  rezagos_definiticos = []
+  bandera = False
+  cont             = 0
+  cont_importancia = 0#rezagos_validos_testH[0]
+  while rezagos_validos_testH[cont]>0:
+
+      mayor_rezago     = rezagos_validos_testH[cont]
+      while (cont + cont_importancia) == rezagos_validos_testH[cont]:
+        mayor_rezago = mayor_rezago if mayor_rezago > rezagos_validos_testH[cont] else rezagos_validos_testH[cont]
+        cont += 1
+        bandera = True
+
+      if bandera ==True:
+        rezagos_definiticos.append(mayor_rezago)
+        bandera = False
+      cont_importancia += 1
+
+  orden = rezagos_definiticos[0] if len(rezagos_definiticos) > 0 else 0
+  orden = orden if ( (rezagos_validos_testH[0] == 1) | (rezagos_validos_testH[0] == 2) ) else 0
+
+  #print('rezagos_definiticos',rezagos_definiticos)
+  rezagos_definiticos.reverse()
+  diccc = {}
+  for rezago_i in rezagos_definiticos:
+
+    cont = 0
+    for i in range(1,max(rezagos_definiticos)+1):
+      if  ( rezago_i % (i) == 0) & (i>1):
+        lista_arm = list(np.arange(0,rezago_i+1,i))
+
+        if all(elem in rezagos_definiticos for elem in lista_arm[1:]) & (cont ==0):
+          diccc[rezago_i] = lista_arm[1:]
+          cont += 1
+
+  #print(diccc)
+  s= 0
+  clave_mayor = 0
+  for clave_i in diccc.keys():
+    corr_mayor = 0
+    if min(diccc[clave_i])>orden:
+      if corr_mayor > abs(corr[diccc[clave_i]]).mean():
+          corr_mayor = corr_mayor
+      else:
+          corr_mayor  = corr[diccc[clave_i]].mean()
+          clave_mayor = clave_i
+      s = min(diccc[clave_i])
+
+  orden_s = len(diccc[clave_mayor]) if clave_mayor != 0 else 0
+  rezagos_definitivos = [orden, (orden_s,s)]
+  return rezagos_definitivos
+
+# ---------------------------------------------------------------------------------
+# -- Para encontrar los rezagos de alguna función de autocorrelación FACS o FACP --
+# ---------------------------------------------------------------------------------
+
+
 
 # -------------------------------------------------------------------------
 # ----------------- Para graficar los residuos de las series --------------
@@ -1237,9 +1352,9 @@ def graficador_de_FACS(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     axes      = axes.flatten()  if len(encabezados) > 1 else [axes]
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
-        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para los residuos de la serie '+i, lags = rezagos_a_graficar[cont])
+        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para la serie '+i, lags = rezagos_a_graficar[cont])
       else:
-        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para los residuos de la serie '+i)
+        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para la serie '+i)
 
     plt.tight_layout();
 
@@ -1277,9 +1392,9 @@ def graficador_de_FACP(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     axes      = axes.flatten() if len(encabezados) > 1 else [axes]
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
-        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+i, lags = rezagos_a_graficar[cont])
+        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para la serie '+i, lags = rezagos_a_graficar[cont])
       else:
-        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+i) 
+        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para la  serie '+i) 
     plt.tight_layout();
 
 
@@ -1442,7 +1557,7 @@ def test_dickey_fuller(dataframe, imprimir = True, retorna_pvalor = False):
       result_1 = 'La serie SI es estacionaria con  1% de significancia (99% de confianza)' if resultados[1] < 0.01 else 'La serie NO es estacionaria con  1% de significancia (99% de confianza)'
       result_2 = 'La serie SI es estacionaria con  5% de significancia (95% de confianza)' if resultados[1] < 0.05 else 'La serie NO es estacionaria con  5% de significancia (95% de confianza)'
       result_3 = 'La serie SI es estacionaria con 10% de significancia (90% de confianza)' if resultados[1] < 0.10 else 'La serie NO es estacionaria con 10% de significancia (90% de confianza)'
-      print(' ',result_1,'\n',result_2,'\n',result_3)
+      print(' ',result_1);print(' ',result_2);print(' ',result_3)
     if retorna_pvalor==True:
       p_valores[i] = resultados[1]
   if retorna_pvalor==True:
