@@ -1225,15 +1225,14 @@ def encontrar_parámetros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 2
   d, serie_diferenciada, _ = encontrar_nro_diferencias_d(serie_univariante, max_d=max_d, alpha=alpha)
 
   autocorr_FACS,  intervalo_confianza_FACS, _,  pvalores_FACS = acf( serie_diferenciada, nlags=len(serie_diferenciada), alpha=alpha, qstat = True)
-  orden_q_Q_S = seleccion_ordenes(autocorr_FACS, intervalo_confianza_FACS)
+  orden_q_Q_S = seleccion_ordenes(intervalo_confianza_FACS, autocorr_FACS)
   #print(corr_facs)
   q  = orden_q_Q_S[0]
   Q  = orden_q_Q_S[1][0]
   SQ = orden_q_Q_S[1][1]
 
   autocorr_FACP,  intervalo_confianza_FACP                    = pacf(serie_diferenciada, alpha=0.05, method = 'ols')
-  corr_facp,  interv_facp = pacf(serie_diferenciada, alpha=0.05)#, method = 'ols')
-  orden_p_P_S = seleccion_ordenes(interv_facp, corr_facp)
+  orden_p_P_S = seleccion_ordenes(intervalo_confianza_FACP, autocorr_FACP)
   #print(corr_facp)
   p  = orden_p_P_S[0]
   P  = orden_p_P_S[1][0]
@@ -1250,6 +1249,11 @@ def encontrar_parámetros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 2
 
   print("(",p,d,q,")(",P,"0",Q,")(",S,")")
   return [(p,d,q),(P,0,Q),(S)]
+
+
+# ---------------------------------------------------------------------------------
+# -- Para encontrar los rezagos de alguna función de autocorrelación FACS o FACP --
+# ---------------------------------------------------------------------------------
 
 def seleccion_ordenes(interv, corr):
   arr_rezagos_bool = np.where(interv[:,1]-corr <= np.abs(corr), True, False)
@@ -1308,10 +1312,6 @@ def seleccion_ordenes(interv, corr):
   orden_s = len(diccc[clave_mayor]) if clave_mayor != 0 else 0
   rezagos_definitivos = [orden, (orden_s,s)]
   return rezagos_definitivos
-
-# ---------------------------------------------------------------------------------
-# -- Para encontrar los rezagos de alguna función de autocorrelación FACS o FACP --
-# ---------------------------------------------------------------------------------
 
 
 
