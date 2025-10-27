@@ -1221,7 +1221,7 @@ def encontrar_nro_diferencias_d(serie, max_d=3, alpha=0.05):
 # -- Para encontrar los rezagos de alguna función de autocorrelación FACS o FACP --
 # ---------------------------------------------------------------------------------
 
-def encontrar_parámetros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 20, max_d = 3, max_p = 3, max_q = 3):
+def encontrar_parametros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 20, max_d = 3, max_p = 3, max_q = 3):
   d, serie_diferenciada, _ = encontrar_nro_diferencias_d(serie_univariante, max_d=max_d, alpha=alpha)
 
   autocorr_FACS,  intervalo_confianza_FACS, _,  pvalores_FACS = acf( serie_diferenciada, nlags=len(serie_diferenciada), alpha=alpha, qstat = True)
@@ -1247,7 +1247,7 @@ def encontrar_parámetros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 2
   elif Q == 0 and P == 0:
       S= 0
 
-  print("(",p,d,q,")(",P,"0",Q,")(",S,")")
+  #print("(",p,d,q,")(",P,"0",Q,")(",S,")")
   return [(p,d,q),(P,0,Q),(S)]
 
 
