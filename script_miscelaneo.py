@@ -1075,8 +1075,10 @@ def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letr
 
 def ajuste_etiqueta_numero(texto):
     valor = float(texto)
-    if abs(valor) < 1e3:
-      etiqueta = '{}'
+    if abs(valor) < 10:
+      etiqueta = '{:.3f}'    
+    elif ( 10 <= abs(valor) ) & (abs(valor) < 1e3):
+      etiqueta = '{:.2f}'
     elif ( 1e3 <= abs(valor) ) & ( abs(valor) < 1e6 ):
       valor = valor / 1e3
       etiqueta = '{:.1f} Mil'
