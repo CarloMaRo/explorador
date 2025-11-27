@@ -16,8 +16,6 @@ from statsmodels.tsa.api                import VAR                # Esto es para
 from statsmodels.tsa.seasonal           import seasonal_decompose
 from statsmodels.tsa.stattools          import grangercausalitytests  # Este sirve para crear la MATRIZ de causalidad de granger
 from scipy.stats.distributions          import chi2
-from statsmodels.tsa.stattools import acf, pacf, adfuller
-from scipy.stats import norm
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -27,21 +25,27 @@ from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import r2_score
 
 import cv2
-'''
+
 try:
   from pyspark.sql.functions import col
   from pyspark.sql.functions import count
   from pyspark.sql.functions import expr
   from pyspark.sql.functions import sum
+  from pyspark.sql.functions import mean
+  from pyspark.sql.functions import min
   from pyspark.sql.functions import desc
   from pyspark.sql.functions import corr
   from pyspark.sql.functions import when
   from pyspark.sql.functions import lit
   from pyspark.sql.functions import to_date
   from pyspark.sql.functions import regexp_replace
+  from pyspark.sql.functions import log
+
+  from pyspark.sql           import functions as F
+  from pyspark.sql.functions import sum, max, min, mean, stddev, count, expr
 except:
   print('no se importa nada de pyspark')   
-'''
+
 
 
 ######################################################################################################################
@@ -351,11 +355,9 @@ def value_counts_nans_spark(dataframe, col_con_nan, col_clases_a_mirar):
 # -------------------- PARA CREAR UN MAPA DE CORRELACIONES -------------------- 
 # -----------------------------------------------------------------------------
 
-def mapa_correlaciones(lista_df, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True):
-  lista_df_matriz_correlaciones = []
-  for df_i in lista_df:
-    lista_df_matriz_correlaciones.append(df_i.corr())
-  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, lista_vars, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor)
+def mapa_correlaciones(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
+  df_matriz_correlaciones = dataframe.corr()
+  imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente)
 
 
 def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
@@ -364,25 +366,11 @@ def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fue
 
 
 
-def imprimir_matriz_correlaciones(lista_corr_matriz, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor):
-    encabezados_nuevos = lista_vars
-    nro_de_variables       = len(lista_vars)
-    contador_graficas  = 0
-    tam                = nro_de_variables#np.sum(range(1,nro_de_variables)) if nro_de_variables > 1 else nro_de_variables - 1    # Esta suma es para determinar el número de gráficos que se deben considerar en TOTAL
-    filas              = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1                                   ########################################
-
-    figure, axis = plt.subplots(nrows = filas, ncols = nro_columnas_subplot,figsize=figsize_subplots )
-    axis = axis.flatten() if nro_columnas_subplot >1 else [axis]
-
-    for cont_i,encabezado_i in enumerate(encabezados_nuevos):                                                                                                                #########################################
-                sns.set_theme(font_scale=tamanio_fuente)
-                plt.figure(figsize=(dims_hor,dims_vert))
-                heat_map = sns.heatmap(lista_corr_matriz[contador_graficas], linewidths=.05, cmap = 'RdBu', vmin = -1, vmax =1, annot = True, ax = axis[contador_graficas], xticklabels=mostrar_letreros_hor)
-                axis[contador_graficas].set_title(encabezado_i, color='gray')
-                contador_graficas += 1
-    plt.tight_layout();
+def imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
+  plt.subplots(figsize=(dims_hor,dims_vert))
+  sns.set_theme(font_scale=tamanio_fuente)
+  heat_map = sns.heatmap(df_matriz_correlaciones, linewidths=.05, cmap = 'RdBu', vmin = -1, vmax =1, annot = True)
    
-
 def matriz_correlaciones_spark(dataframe):
 
   cols_NO_numericas  = ['string', 'date', 'boolean']
@@ -453,18 +441,22 @@ def dataframe_correlacion_grafico_spark (dataframe, variables_a_comparar, variab
 def graficar_dataframe_correlaciones(df_matriz_correlaciones, variables_a_comparar, variables_a_dejar_en_filas = False, variable_para_ordenar = False, umbral_positivo = 0, umbral_negativo = 0):
   df_matriz_correlaciones = df_matriz_correlaciones[variables_a_comparar]
   #cm                      = sns.light_palette('green', as_cmap = True)
-  cm                      = 'RdBu'#sns.light_palette('RdBu', as_cmap = True)
+  cm                      = sns.color_palette('RdBu', as_cmap = True)
+
   if variables_a_dejar_en_filas  != False:
     df_matriz_correlaciones = df_matriz_correlaciones.filter(items = variables_a_dejar_en_filas, axis = 0)
 
   if variable_para_ordenar != False:
     df_matriz_correlaciones.sort_values(variable_para_ordenar, ascending = False, inplace = True)
-    df_matriz_correlaciones = df_matriz_correlaciones.reindex(columns = df_matriz_correlaciones.index)
+
+    nuevo_orden = df_matriz_correlaciones.index.tolist()
+    df_matriz_correlaciones.sort_values(nuevo_orden, axis = 1, ascending = False, inplace = True)
+
     if (umbral_positivo > 0) & (umbral_negativo < 0):
       limite_de_correlaciones(df_matriz_correlaciones, variable_para_ordenar, umbral_positivo , umbral_negativo)
       df_matriz_correlaciones = df_matriz_correlaciones[   ((df_matriz_correlaciones[variable_para_ordenar] > umbral_positivo) & (df_matriz_correlaciones[variable_para_ordenar] < 1))   |   ((df_matriz_correlaciones[variable_para_ordenar] < umbral_negativo) & (df_matriz_correlaciones[variable_para_ordenar] > -1))   ]
     
-  salida = df_matriz_correlaciones.style.background_gradient(cmap = cm, vmin=-1, vmax=1)
+  salida = df_matriz_correlaciones.style.background_gradient(cmap = cm, vmin = -1, vmax = 1)
   return salida
 
 # ------------------------------------------------------------------------------
@@ -804,7 +796,7 @@ def dispersor_clase(dataframe, variable_clase, nro_columnas_subplot, cols_no_gra
         imprimir_colores_clases(clases, colores_categorias)
     
     contador_graficas  = 0
-    tam                = sum(range(1,nro_de_variables)) if solo_variable_clase == False else nro_de_variables - 1    # Esta suma es para determinar el número de gráficos que se deben considerar en TOTAL
+    tam                = np.sum(range(1,nro_de_variables)) if solo_variable_clase == False else nro_de_variables - 1    # Esta suma es para determinar el número de gráficos que se deben considerar en TOTAL
     filas              = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1                                   ########################################
 
     figure, axis = plt.subplots(nrows =filas, ncols = nro_columnas_subplot, figsize = figsize_subplots)
@@ -880,10 +872,25 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_gr
 
 # _________________________________________________________________________
 # --(vars categóricas de MI interes VS vars numéricas agrupadas por suma)--
+# --VALIDAR QUE LOS DATOS NO TENGAN NaN
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
-              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, tamanio_fuente = 5, nro_decimales=2, imprimir_porcentaje= True):
-    encabezados         = dataframe.columns.tolist()
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
+   
+   barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo)
+  
+
+def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
+   
+   barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo, es_spark = True)
+
+
+def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, es_spark = False, logaritmo = False):
+    encabezados         = list(dataframe.columns)
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
     #tam                 = len(encabezados_nuevos)*len(variables)
@@ -893,40 +900,55 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
     fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots) if tam > 1 else plt.subplots(figsize = figsize_subplots)
     ax      = ax.flatten() if tam > 1 else ax
   
-    numero_de_datos = len(dataframe)
+    #numero_de_datos = len(dataframe)
     cont = 0
     for k in variables:
+      print('entramos al for 1',k)
       var_analisis    = dataframe[k]
-      clases          = var_analisis.unique()
-      
+      clases          = var_analisis.unique() if es_spark == False else dataframe.select(col(k)).distinct().select(k).rdd.flatMap(lambda x: x).collect()
+      print('     definimos las clases de',k)
+
+      datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+      clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in clases ]
+
+      print('     ajustamos los letreros de las clases de',k)
+
       for j in encabezados_nuevos:
-
+        print('     entramos al for 2',j)
         for accion in acciones:
-
+          print('           entramos al for 3',accion)
           df_aux = pd.DataFrame()
           cantidades = []
           for i in clases:
-            df_aux = dataframe[dataframe[k] == i].copy()
+            print('                 entramos al for 4',i)
+            print('                       calculamos el df auxiliar')
+            df_aux = dataframe[dataframe[k] == i].copy() if es_spark == False else dataframe.filter(col(k) == i)
+            print('                       terminamos de calcular el df auxiliar')
+            print('                       inicia la operación',accion)
             #print(j)
             if   accion == 'suma':
-              valor  = sum(df_aux[j])
+              valor  = np.sum(df_aux[j]) if es_spark == False else df_aux.agg(sum(col(j))).collect()[0][0]
             elif accion == 'max':
-              valor  = max(df_aux[j]) 
+              valor  = np.max(df_aux[j]) if es_spark == False else df_aux.agg(max(col(j))).collect()[0][0]
             elif accion == 'min':
-              valor  = min(df_aux[j])
+              valor  = np.min(df_aux[j]) if es_spark == False else df_aux.agg(min(col(j))).collect()[0][0]
             elif accion == 'media':
-              valor  = df_aux[j].mean()
+              valor  = np.mean(df_aux[j]) if es_spark == False else df_aux.agg(mean(col(j))).collect()[0][0]
             elif accion == 'desv_std':
-              valor  = df_aux[j].std()
+              valor  = np.std(df_aux[j]) if es_spark == False else df_aux.agg(stddev(col(j))).collect()[0][0]
             elif accion == 'mediana':
-              valor  = df_aux[j].median()
+              valor  = np.median(df_aux[j]) if es_spark == False else df_aux.approxQuantile(j, [0.5], 0.01)[0]
             elif accion == 'moda':
-              valor  = df_aux[j].mode()
+              valor  = df_aux[j].mode() if es_spark == False else df_aux.groupBy(j).count().orderBy(F.desc("count"), F.asc(j)).collect()[0][0]
             elif accion == 'contar':
-              valor  = df_aux[j].count()
-
+              valor  = np.count(df_aux[j]) if es_spark == False else df_aux.agg(count(col(j))).collect()[0][0]
+            print('                       termina la operación',accion)
             cantidades.append(valor)          
             del df_aux
+          print('                 termina el for 4')
+          
+
+          cantidades = cantidades if (~logaritmo) else np.log(cantidades) if ~es_spark else df_aux.agg(log(col(j))).collect()[0][0]
 
           try:
             ax_i = ax[cont]
@@ -934,30 +956,87 @@ def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subp
             ax_i = ax
 
           if j != k:
-            barras = ax_i.bar( clases, cantidades, label = k +' VS '+accion+'('+ j+')', alpha = 0.4) #bins = 10,
-            
-            ax_i.legend(loc="best", fontsize=tamanio_fuente)
+
+            mensaje = divisor_texto_renglones(k +' VS '+accion+'('+ j+')')
+            barras = ax_i.bar( clases_a_impr, cantidades, label = mensaje, alpha = 0.4) #bins = 10,
+
+            if impr_valores:
+              autoetiquetado(barras = barras, axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
+                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores) #, total = numero_de_datos)
+
+            renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
+            print('     ',renglones_letrero_mas_grande,'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+
+            if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
+              tamanio_fuente = 40
+              tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente     
+              print('tamaño de la fuente' ,tamanio_fuente)         
+              ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+              ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+            else:
+              ax_i.tick_params(axis='x',  labelsize=20)
+              ax_i.tick_params(axis='y',  labelsize=20) 
+            """
+            tamanio_fuente = 40
+            #tamanio_fuente = ancho_barra/renglones_letrero_mas_grande*0.8 if ancho_barra and (tamanio_fuente*renglones_letrero_mas_grande > ancho_barra) else tamanio_fuente
+            tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente
+            """
+
+            etiquetas_eje_x = [divisor_texto_renglones(etiqueta_i) for etiqueta_i in clases_a_impr]
+            ax_i.set_xticklabels(etiquetas_eje_x)
+
+            ax_i.legend(loc="best", fontsize=20)
             #ax_i.set_yscale('log')
-            ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
-            ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+            ###########ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+            ###########ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
             #ax_i.set_xlabel(i)
             #ax_i.set_title(k +' VS '+ j, fontsize = 20)
             ax_i.set_yticks([])
 
-            if impr_valores:
-              autoetiquetado(barras = barras, axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
-                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores, nro_decimales = nro_decimales, imprimir_porcentaje = imprimir_porcentaje) #, total = numero_de_datos)
-
             cont += 1
+        print('           termina al for 3')  
+      print('     termina al for 2')
+    print('termina al for 1')
     plt.tight_layout();
 
-def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros, nro_decimales, imprimir_porcentaje):#, total = 0):
+def divisor_texto_renglones(texto_original, max_caracteres=25):
+    datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+    #texto_original = texto_original if isinstance(texto_original, datos_numericos) else texto_original.replace('_', ' ')
+    #lista_palabras = texto_original if isinstance(texto_original, datos_numericos) else texto_original.split()   # Dividimos el texto en palabras
+    texto_original = texto_original.replace('_', ' ')
+    lista_palabras = texto_original.split()                                               # Dividimos el texto en palabras
+    lista_texto_final = []                                                                # Lista para almacenar las líneas resultantes
+    renglon_actual = []                                                                   # Lista para formar la línea actual
+    long_renglon_actual = 0                                                               # Longitud de la línea actual
+
+    for palabra_i in lista_palabras:
+        if long_renglon_actual + len(palabra_i) + len(renglon_actual) > max_caracteres:   # Si agregar la palabra excede la longitud máxima permitida
+            lista_texto_final.append(' '.join(renglon_actual))                            # Agrega la línea actual a las líneas
+            renglon_actual = [palabra_i]                                                  # Inicia una nueva línea con la palabra actual
+            long_renglon_actual = len(palabra_i)                                          # Reinicia la longitud de la línea actual
+        else:
+            renglon_actual.append(palabra_i)                                              # Agrega la palabra a la línea actual
+            long_renglon_actual += len(palabra_i)                                         # Incrementa la longitud de la línea actual
+
+    if renglon_actual:
+        lista_texto_final.append(' '.join(renglon_actual))  # Agrega la última línea si queda alguna palabra
+
+    texto_final = '\n'.join(lista_texto_final)
+    return texto_final
+
+def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#, total = 0):
   total   = 0
   alt_max = 0
+  alt_min = 0
   for cont, barra_i in enumerate(axes.patches):                   # En este "for" calculamos la altura de la barra mas alta
     altura  = barra_i.get_height()
     total   = altura + total
-    alt_max = altura if abs(altura) > abs(alt_max) else alt_max
+    #alt_max = altura if abs(altura) > abs(alt_max) else alt_max
+    #alt_min = altura if abs(altura) < abs(alt_min) else alt_min
+    alt_max = altura if altura > alt_max else alt_max
+    alt_min = altura if altura < alt_min else alt_min
+  
+  alt_max = alt_max + alt_min
 
   #print(alt_max)
   if alt_max < 2:                   # Esta es una medida arbitratia para que los letreros de las gráficas queden relativamente centrados cuando la altura de las barras es muy pequeña
@@ -973,14 +1052,13 @@ def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letr
        altura_barra = altura_barra_i
        etiqueta = '{:.2E}'    # cuando esto se toma, se imprimen los resultados en notación científica
     else:
-       tupla = ajuste_etiqueta_numero(altura_barra_i, nro_decimales)
+       tupla = ajuste_etiqueta_numero(altura_barra_i)
        altura_barra = float(tupla[0])
        etiqueta     = tupla[1]
 
     #print(type(altura_barra), altura_barra_i,end = '-')
     #print(type(etiqueta), etiqueta)
-    texto = '\n '+etiqueta.format(altura_barra)+'  \n {:2.2%}'.format(altura_barra_i/total ) if imprimir_porcentaje else '\n '+etiqueta.format(altura_barra)
-    texto = texto if total != 0 else '{:.2f}'.format(altura_barra_i)
+    texto          = '\n '+etiqueta.format(altura_barra)+'  \n {:2.2%}'.format(altura_barra_i/total ) if total != 0 else '{:.2f}'.format(altura_barra_i)
 
     axes.annotate(
                   texto,
@@ -995,22 +1073,22 @@ def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letr
                   color      = 'k' #'white
                   )
 
-def ajuste_etiqueta_numero(texto, nro_decimales):
+def ajuste_etiqueta_numero(texto):
     valor = float(texto)
     if abs(valor) < 1e3:
-      etiqueta = '{:.'+str(nro_decimales)+'f}'
+      etiqueta = '{}'
     elif ( 1e3 <= abs(valor) ) & ( abs(valor) < 1e6 ):
       valor = valor / 1e3
-      etiqueta = '{:.'+str(nro_decimales)+'f} Mil'
+      etiqueta = '{:.1f} Mil'
     elif ( 1e6 <= abs(valor) ) & ( abs(valor) < 1e9 ):
       valor = valor / 1e6
-      etiqueta = '{:.'+str(nro_decimales)+'f} Millones'        
+      etiqueta = '{:.1f} Millones'        
     elif ( 1e9 <= abs(valor) ) & ( abs(valor) < 1e12 ):
       valor = valor / 1e9
-      etiqueta = '{:.'+str(nro_decimales)+'f} MilMillones'
+      etiqueta = '{:.1f} MilMillones'
     elif ( 1e12 <= abs(valor) ) :
       valor = valor / 1e12
-      etiqueta = '{:.'+str(nro_decimales)+'f} Billones'
+      etiqueta = '{:.1f} Billones'
     
     #print(valor, etiqueta)
     #print(type(valor), type(etiqueta))
@@ -1018,8 +1096,18 @@ def ajuste_etiqueta_numero(texto, nro_decimales):
 # _________________________________________________________________________
 # ----------(vars categóricas VS vars categóricas de MI interes)-----------
 
-def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False):
-  encabezados         = dataframe.columns.tolist()
+def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False):
+   barriador_categoricas_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables,
+                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo)
+
+
+def barriador_categoricas_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False, es_spark = True):
+   barriador_categoricas_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables,
+                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo, es_spark = es_spark)
+
+
+def barriador_categoricas_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
+  encabezados         = list(dataframe.columns)
   encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
   encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
   tam                 = len(encabezados_nuevos)
@@ -1035,16 +1123,145 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
 
   for j in variables:
     for i, col in enumerate(encabezados_nuevos):
+
       try: 
         ax_i = ax[i]
       except:
         ax_i = ax
 
-      pd.crosstab(dataframe[col],dataframe[j], normalize = normalizador).plot(kind='bar', ax=ax_i, stacked = una_barra)
-      ax_i.set_xlabel(ajusta_titulo(col), fontsize = 20)
+      if es_spark:      
+        df_pandas = dataframe.crosstab(col,j).toPandas()
+        columna_indice = df_pandas.columns.tolist()[0]
+        #print(columna_indice)
+        df_pandas.index = df_pandas[columna_indice]
+        del df_pandas[columna_indice]
+        #print(df_pandas)
+      else:
+        df_pandas = pd.crosstab(dataframe[col],dataframe[j], normalize = normalizador)
+
+      if logaritmo:
+         arr_sin_ceros = df_pandas.values + 1
+         df_pandas[:] = np.log(arr_sin_ceros)
+
+      #df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
+
+      datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+      etiquetas_eje_x = [i for i in df_pandas.index.tolist()]
+      clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x ]
+      renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
+
+      df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)#, xticks = clases_a_impr)
+      #plt.xticks(ticks = clases_a_impr)
+      #ax_i.xticks(ticks = clases_a_impr)
+      ax_i.set_xticklabels(clases_a_impr)
+
+      ax_i.set_xlabel(divisor_texto_renglones(col), fontsize = 20)
       ax_i.legend(loc="best", fontsize=20)
       #ax_i.set_yscale('log')
-      ax_i.tick_params(axis='x', labelrotation=90, labelsize=20)
+
+      if ( renglones_letrero_mas_grande !=1 ) and (len(clases_a_impr)>2):
+        tamanio_fuente = 40
+        tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente              
+        ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+        ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+      else: 
+        ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
+
+      
+  plt.tight_layout();
+
+
+def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, dicc_vars_esp, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
+  encabezados         = list(dataframe.columns)
+  encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
+  encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
+
+  lista_vars_especiales = list(dicc_vars_esp.keys())
+  graf_total_esp = 0
+  for var_esp_i in lista_vars_especiales:
+    graf_total_esp += len(dicc_vars_esp[var_esp_i])
+
+  tam                 = len(encabezados_nuevos)*graf_total_esp
+  filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
+
+  fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots) if tam > 1 else plt.subplots(figsize = figsize_subplots)
+  ax      = ax.flatten() if tam > 1 else ax
+
+  if porcentaje == True:
+    normalizador = 'index'
+  else:
+    normalizador = porcentaje
+
+  for var_i in variables:
+
+    cont_graf = 0
+    for cont, col in enumerate(encabezados_nuevos):
+      
+      for var_esp_i in lista_vars_especiales:
+          
+        lista_func_especiales = dicc_vars_esp[var_esp_i]
+        dicc_aux = {}
+        for func_i in lista_func_especiales:
+          dicc_aux[var_esp_i] = [func_i]
+          
+          try: 
+            ax_i = ax[cont_graf]
+          except:
+            ax_i = ax
+
+          df_pandas = crosstab_plus(dataframe,col, var_i, dicc_colsfunc_agrupables = dicc_aux, es_spark = es_spark)
+
+          cols_actuales = df_pandas.columns
+          cols   = cols_actuales.get_level_values('columnas')
+          funcs  = cols_actuales.get_level_values('funciones')
+          clases = cols_actuales.get_level_values(var_i)
+          multi_indice = pd.MultiIndex.from_arrays( [clases, funcs, cols ], names = [var_i,"funciones","columnas"] )
+          df_pandas = pd.DataFrame(df_pandas.values, index = df_pandas.index, columns = multi_indice)
+          df_pandas.sort_index(inplace=True)
+
+
+          '''
+          if es_spark:      
+            df_pandas = dataframe.crosstab(col,var_i).toPandas()
+            columna_indice = df_pandas.columns.tolist()[0]
+            #print(columna_indice)
+            df_pandas.index = df_pandas[columna_indice]
+            del df_pandas[columna_indice]
+            #print(df_pandas)
+          else:
+            df_pandas = pd.crosstab(dataframe[col],dataframe[var_i], normalize = normalizador)
+          '''
+
+          if logaritmo:
+            arr_sin_ceros = df_pandas.values + 1
+            df_pandas[:] = np.log(arr_sin_ceros)
+
+          #df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
+
+          datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+          etiquetas_eje_x = [k for k in df_pandas.index.tolist()]
+          clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x ]
+          renglones_letrero_mas_grande = np.max([len(str(k).split('\n')) for k in clases_a_impr])
+
+          df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)#, xticks = clases_a_impr)
+          #plt.xticks(ticks = clases_a_impr)
+          #ax_i.xticks(ticks = clases_a_impr)
+          ax_i.set_xticklabels(clases_a_impr)
+
+          ax_i.set_xlabel(divisor_texto_renglones(col), fontsize = 20)
+          ax_i.legend(loc="best", fontsize=20)
+          #ax_i.set_yscale('log')
+
+          if ( renglones_letrero_mas_grande !=1 ) and (len(clases_a_impr)>2):
+            tamanio_fuente = 40
+            tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente              
+            ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+            ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
+          else: 
+            ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
+
+          cont_graf += 1
+      
   plt.tight_layout();
 
 
@@ -1052,6 +1269,71 @@ def ajusta_titulo(string):
   if len(string) > 22:
     string = string[:18] + '\n' + string[18:]
   return string
+
+# -------------------------------------------------------------------------
+# ------------------------------- CROSSTAB --------------------------------
+# -------------------------------------------------------------------------
+
+def crosstab_plus(dataframe,col_1, col_2, dicc_colsfunc_agrupables = {}, es_spark = False):
+
+  if   (es_spark== False) & (len(dicc_colsfunc_agrupables) != 0):
+    cols_agrupables           = list(dicc_colsfunc_agrupables.keys())
+    df_crosstab               = dataframe.pivot_table(index=col_1, columns=col_2, values=cols_agrupables, aggfunc=dicc_colsfunc_agrupables)
+    df_crosstab.columns.names = ["columnas", "funciones", col_2]
+
+  elif (es_spark== True) & (len(dicc_colsfunc_agrupables) != 0):
+    dicc_funciones_agregacion = {
+                                  "sum": sum,
+                                  "mean": mean,
+                                  "max": max,
+                                  "min": min,
+                                  "count": count
+                                }
+
+    # Convertir el diccionario a una lista de expresiones de agregación
+    lista_func_agrupacion = []
+    for col_i, lista_func_i in dicc_colsfunc_agrupables.items():
+        for funcion_i in lista_func_i:
+            lista_func_agrupacion.append(dicc_funciones_agregacion[funcion_i](col_i).alias(f"{col_i}_{funcion_i}"))
+    #print(lista_func_agrupacion)
+
+    # Realizar el crosstab con las funciones de agregación
+    df_crosstab = dataframe.groupBy(col_1).pivot(col_2).agg(*lista_func_agrupacion).toPandas()
+    df_crosstab.index=df_crosstab[col_1]
+    del df_crosstab[col_1]
+    #print(df_crosstab)
+
+    viejas_cols = df_crosstab.columns.tolist()
+
+    nuevas_cols = []
+    for i in viejas_cols:
+      paramestros = i.split('_')
+      nuevas_cols.append('_'.join(paramestros[1:-1])+'_'+paramestros[-1]+'_'+paramestros[0])
+
+    dicc_cambio_cols = {}
+    for col_vieja_i, col_nueva_i in zip(viejas_cols,nuevas_cols):
+      dicc_cambio_cols[col_vieja_i]=col_nueva_i
+
+    df_crosstab.rename(columns = dicc_cambio_cols, inplace = True)
+    df_crosstab.sort_index(axis=1,inplace = True)
+
+    cols_actuales = df_crosstab.columns.tolist()
+
+    cols  = []
+    funcs = []
+    datos = []
+    for i in cols_actuales:
+      paramestros = i.split('_')
+      cols.append('_'.join(paramestros[0:-2]))
+      funcs.append(paramestros[-2])
+      datos.append(paramestros[-1])
+
+    multi_indice = pd.MultiIndex.from_arrays( [cols, funcs, datos], names = ["columnas", "funciones", col_2] )
+    df_crosstab = pd.DataFrame(df_crosstab.values, index = df_crosstab.index, columns = multi_indice)
+    df_crosstab.sort_index(inplace=True)
+
+  return df_crosstab
+
 
 # -------------------------------------------------------------------------
 # ------------------------------- BOXPLOTS --------------------------------
@@ -1201,139 +1483,43 @@ def descomposicion_temporal(dataframe, parametro):
     df_auxiliar[i] = descomposicion.trend if parametro == 'tendencia' else descomposicion.seasonal if parametro == 'estacional' else descomposicion.resid if parametro == 'residuo' else print('PARÁMETRO ERRÓNEAMENTE ELEGIDO')
   return df_auxiliar
 
-# ----------------------------------------------------------------------------------
-# - Para encontrarar nro de diferencias requeridas pa volver la serie estacionaria -
-# ----------------------------------------------------------------------------------
-
-def encontrar_nro_diferencias_d(serie, max_d=3, alpha=0.05):
-    d = 0
-    serie_limpia = serie.dropna()
-    while d < max_d:
-        resultado_test_dickeyfuller = adfuller(serie_limpia)
-        p_valor_test_dickeyfuller = resultado_test_dickeyfuller[1]
-        if p_valor_test_dickeyfuller < alpha:
-            return d, serie_limpia, p_valor_test_dickeyfuller
-        serie_limpia = serie_limpia.diff().dropna()
-        d += 1
-    return d, serie_limpia, p_valor_test_dickeyfuller
-
-# ---------------------------------------------------------------------------------
-# -- Para encontrar los rezagos de alguna función de autocorrelación FACS o FACP --
-# ---------------------------------------------------------------------------------
-
-def encontrar_parametros_ARIMA(serie_univariante, alpha=0.05, nro_rezagos_p = 20, max_d = 3, max_p = 3, max_q = 3):
-  d, serie_diferenciada, _ = encontrar_nro_diferencias_d(serie_univariante, max_d=max_d, alpha=alpha)
-
-  autocorr_FACS,  intervalo_confianza_FACS, _,  pvalores_FACS = acf( serie_diferenciada, nlags=len(serie_diferenciada), alpha=alpha, qstat = True)
-  orden_q_Q_S = seleccion_ordenes(intervalo_confianza_FACS, autocorr_FACS)
-  #print(corr_facs)
-  q  = orden_q_Q_S[0]
-  Q  = orden_q_Q_S[1][0]
-  SQ = orden_q_Q_S[1][1]
-
-  autocorr_FACP,  intervalo_confianza_FACP                    = pacf(serie_diferenciada, alpha=0.05, method = 'ols')
-  orden_p_P_S = seleccion_ordenes(intervalo_confianza_FACP, autocorr_FACP)
-  #print(corr_facp)
-  p  = orden_p_P_S[0]
-  P  = orden_p_P_S[1][0]
-  SP = orden_p_P_S[1][1]
-
-  if Q>0 and P==0:
-      S =SQ
-  elif P>0 and Q==0:
-      S = SP
-  elif P>0 and Q>0:
-      S = SP if P<Q else SQ
-  elif Q == 0 and P == 0:
-      S= 0
-
-  #print("(",p,d,q,")(",P,"0",Q,")(",S,")")
-  return [(p,d,q),(P,0,Q),(S)]
-
-
-# ---------------------------------------------------------------------------------
-# -- Para encontrar los rezagos de alguna función de autocorrelación FACS o FACP --
-# ---------------------------------------------------------------------------------
-
-def seleccion_ordenes(interv, corr):
-  arr_rezagos_bool = np.where(interv[:,1]-corr <= np.abs(corr), True, False)
-
-  rezagos_validos_testH = [cont for cont in range(len(arr_rezagos_bool)) if (cont>0)& (arr_rezagos_bool[cont])]
-  rezagos_validos_testH.append(0)
-  #print('booleano                ',arr_rezagos_bool)
-  #print('rezagos_validos_testH   ',rezagos_validos_testH)
-  rezagos_definiticos = []
-  bandera = False
-  cont             = 0
-  cont_importancia = 0#rezagos_validos_testH[0]
-  while rezagos_validos_testH[cont]>0:
-
-      mayor_rezago     = rezagos_validos_testH[cont]
-      while (cont + cont_importancia) == rezagos_validos_testH[cont]:
-        mayor_rezago = mayor_rezago if mayor_rezago > rezagos_validos_testH[cont] else rezagos_validos_testH[cont]
-        cont += 1
-        bandera = True
-
-      if bandera ==True:
-        rezagos_definiticos.append(mayor_rezago)
-        bandera = False
-      cont_importancia += 1
-
-  orden = rezagos_definiticos[0] if len(rezagos_definiticos) > 0 else 0
-  orden = orden if ( (rezagos_validos_testH[0] == 1) | (rezagos_validos_testH[0] == 2) ) else 0
-
-  #print('rezagos_definiticos',rezagos_definiticos)
-  rezagos_definiticos.reverse()
-  diccc = {}
-  for rezago_i in rezagos_definiticos:
-
-    cont = 0
-    for i in range(1,max(rezagos_definiticos)+1):
-      if  ( rezago_i % (i) == 0) & (i>1):
-        lista_arm = list(np.arange(0,rezago_i+1,i))
-
-        if all(elem in rezagos_definiticos for elem in lista_arm[1:]) & (cont ==0):
-          diccc[rezago_i] = lista_arm[1:]
-          cont += 1
-
-  #print(diccc)
-  s= 0
-  clave_mayor = 0
-  for clave_i in diccc.keys():
-    corr_mayor = 0
-    if min(diccc[clave_i])>orden:
-      if corr_mayor > abs(corr[diccc[clave_i]]).mean():
-          corr_mayor = corr_mayor
-      else:
-          corr_mayor  = corr[diccc[clave_i]].mean()
-          clave_mayor = clave_i
-      s = min(diccc[clave_i])
-
-  orden_s = len(diccc[clave_mayor]) if clave_mayor != 0 else 0
-  rezagos_definitivos = [orden, (orden_s,s)]
-  return rezagos_definitivos
-
-
 
 # -------------------------------------------------------------------------
 # ----------------- Para graficar los residuos de las series --------------
 # -------------------------------------------------------------------------
 
 
-def graficador_residuos(df_serie_residuo,variable, figsize_subplot):
+def graficador_residuos(df_serie_residuo,variable, figsize_subplot, verbose = False):
+
+  if verbose:
+     print('- Función para graficar los residuos de una predicción en una serie de tiempo')
+     print('- El dataframe "df_serie_residuo" debe ser un dataframe que contenga en alguna columna')
+     print('el residuo de la predicción, es decir "yreal-ypred"')
+     print('- Al estar graficando residuos, es de esperarse que sea una serie aleatoria que no tenga')
+     print('ningún patrón, ni estacionalidad, ni tendencia aparente/visible (como el ruido). Esto')
+     print('debe apreciarse en los correlogramas al no evidenciar ningún tipo de relevancia en ningún "lag"')
+     print('- Al ser los residuos una serie aleatoria, debe tener un histograma de campana (los residuos')
+     print('son similares al ruido) y por ende se esperaría un comportamiento normal')
+
   fid, axes = plt.subplots(nrows = 3, ncols = 2, dpi = 120, figsize = figsize_subplot)
   axes = axes.flatten()
   encabezados_subplot =  df_serie_residuo.columns.tolist()
 
-  nro_retardos = 40                                                  # Se suele tomar 40
+  nro_retardos = 40                                                # Se suele tomar 40
   serie = df_serie_residuo[variable]
 
   axes[0].plot(serie);axes[0].set_title('Serie '+variable)
   axes[1].hist(serie);axes[1].set_title('Histograma de la Serie '+variable)
   sm.graphics.tsa.plot_acf( serie, ax = axes[2], zero = False, title = 'FACS para los residuos de la serie '+variable)
-  sm.graphics.tsa.plot_pacf(serie, ax = axes[3], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+variable)
+  if len(df_serie_residuo) < 10:
+    sm.graphics.tsa.plot_pacf(serie, ax = axes[3], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+variable, lags = 6)
+  else:
+    sm.graphics.tsa.plot_pacf(serie, ax = axes[3], zero = False, method = ('ols'), title = 'FACP para los residuos la  serie '+variable)
   sm.graphics.tsa.plot_acf( serie**2, ax = axes[4], zero = False, title = 'FACS para los residuos al cuadrado, de la serie '+variable)
-  sm.graphics.tsa.plot_pacf(serie**2, ax = axes[5], zero = False, method = ('ols'), title = 'FACP para los residuos al cuadrado, de la serie '+variable)
+  if len(df_serie_residuo) < 10:
+    sm.graphics.tsa.plot_pacf(serie**2, ax = axes[5], zero = False, method = ('ols'), title = 'FACP para los residuos al cuadrado, de la serie '+variable)
+  else:
+    sm.graphics.tsa.plot_pacf(serie**2, ax = axes[5], zero = False, method = ('ols'), title = 'FACP para los residuos al cuadrado, de la serie '+variable, lags = 6)
   plt.tight_layout();               # Esto hace que los gráficos ocupen mejor el ancho de la pantalla
 
 
@@ -1349,12 +1535,13 @@ def graficador_de_FACS(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten()  if len(encabezados) > 1 else [axes]
+    axes      = axes.flatten() if len(dataframe.columns) > 1 else [axes]
+    #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
-        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para la serie '+i, lags = rezagos_a_graficar[cont])
+        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS de la serie '+i, lags = rezagos_a_graficar[cont])
       else:
-        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS para la serie '+i)
+        sm.graphics.tsa.plot_acf( dataframe[i], ax = axes[cont], zero = False, title = 'FACS de la serie '+i)
 
     plt.tight_layout();
 
@@ -1371,7 +1558,8 @@ def graficador_envolvente_FACS(dataframe, nro_columnas_subplot, cols_no_graficab
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten() if len(encabezados) > 1 else [axes]
+    axes      = axes.flatten() if len(dataframe.columns) > 1 else [axes]
+    #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       pd.plotting.autocorrelation_plot(dataframe[i], ax = axes[cont], label = i)
     plt.tight_layout();
@@ -1389,12 +1577,13 @@ def graficador_de_FACP(dataframe, nro_columnas_subplot, cols_no_graficables, fig
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
 
     fig, axes = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    axes      = axes.flatten() if len(encabezados) > 1 else [axes]
+    axes      = axes.flatten() if len(dataframe.columns) > 1 else [axes]
+    #axes      = axes.flatten()
     for cont, i in enumerate(col_para_histograma):
       if len(rezagos_a_graficar) > 0:
-        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para la serie '+i, lags = rezagos_a_graficar[cont])
+        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP de la serie '+i, lags = rezagos_a_graficar[cont])
       else:
-        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP para la  serie '+i) 
+        sm.graphics.tsa.plot_pacf(dataframe[i], ax = axes[cont], zero = False, method = ('ols'), title = 'FACP de la serie '+i) 
     plt.tight_layout();
 
 
@@ -1541,27 +1730,17 @@ def recorto_decimales(num, nro_decimales = 2):
 # _________________________________________________________________________
 # --------------------(Test completo para varias variables)----------------
 
-def test_dickey_fuller(dataframe, imprimir = True, retorna_pvalor = False):
+def test_dickey_fuller(dataframe):
   encabezados_df = dataframe.columns.tolist()
-  p_valores = {}
   for i in encabezados_df:
     resultados = sts.adfuller(dataframe[i])
-    if imprimir:
-      print('\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX VARIABLE ',i,'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-      print('Ho : La serie NO es estacionaria\nHA : La serie SI es estacionaria')
-      print('   Estadístico de prueba = ',resultados[0],'(estad de prueba < valor crítico, entonces se rechaa la hipótesis nula)')
-      print('   P-valor               = ',resultados[1],'(         pvalor < alpha        , entonces se rechaa la hipótesis nula)')
-      print('   Nro de lags           = ',resultados[2],'(estos son el número de retardos que mediante una regresión, se usaron para calcular el estadístico de prueba, cuando no hay autocorrelaciones, se regresa 0)')
-      print('   Nro de observaciones  = ',resultados[3],'(número de observaciones usadas en el análisis)')
-      print('alpha_1 =  1%    |    valor crítico_1 = -3.43\nalpha_2 =  5%    |    valor crítico_2 = -2.86\nalpha_3 = 10%    |    valor crítico_3 = -2.56')
-      result_1 = 'La serie SI es estacionaria con  1% de significancia (99% de confianza)' if resultados[1] < 0.01 else 'La serie NO es estacionaria con  1% de significancia (99% de confianza)'
-      result_2 = 'La serie SI es estacionaria con  5% de significancia (95% de confianza)' if resultados[1] < 0.05 else 'La serie NO es estacionaria con  5% de significancia (95% de confianza)'
-      result_3 = 'La serie SI es estacionaria con 10% de significancia (90% de confianza)' if resultados[1] < 0.10 else 'La serie NO es estacionaria con 10% de significancia (90% de confianza)'
-      print(' ',result_1);print(' ',result_2);print(' ',result_3)
-    if retorna_pvalor==True:
-      p_valores[i] = resultados[1]
-  if retorna_pvalor==True:
-    return p_valores # retornamos el p-valor
+    print('\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX VARIABLE ',i,'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+    print('Ho : La serie NO es estacionaria\nHA : La serie SI es estacionaria')
+    print('   Estadístico de prueba = ',resultados[0],'(estad de prueba < valor crítico, entonces se rechaa la hipótesis nula)')
+    print('   P-valor               = ',resultados[1],'(         pvalor < alpha        , entonces se rechaa la hipótesis nula)')
+    print('   Nro de lags           = ',resultados[2],'(estos son el número de retardos que mediante una regresión, se usaron para calcular el estadístico de prueba, cuando no hay autocorrelaciones, se regresa 0)')
+    print('   Nro de observaciones  = ',resultados[3],'(número de observaciones usadas en el análisis)')
+    print('alpha_1 =  1%    |    valor crítico_1 = -3.43\nalpha_2 =  5%    |    valor crítico_2 = -2.86\nalpha_3 = 10%    |    valor crítico_3 = -2.56')
 
 # _________________________________________________________________________
 # ----------------------(Pvalor para varias variables)---------------------
@@ -1895,3 +2074,29 @@ def histogrameador_imagenes (lista_imagenes, nro_columnas_subplot, figsize_subpl
   axis[cont_imagen].legend()  # línea para mostrar los labels en la gráfica
 
   #axis[cont_imagen].set_title('imagen_'+str(cont_imagen))
+
+
+######################################################################################################################
+################## FUNCIÓN PARA ALISTAR DATA PARA REDES LSTM (UNI Y MULTIVARIANTES) ##################################
+######################################################################################################################
+
+def datos_lstm(dataframe, lista_columnas, nro_datos_por_secuencia, nro_datos_a_predecir ):
+   
+  arr                     = dataframe[lista_columnas].values
+  nro_datos_totales_serie = len(dataframe[lista_columnas])
+  #columnas = len(dataframe[lista_columnas].columns)
+
+  nro_total_de_secuencias  = nro_datos_totales_serie + 1 - (nro_datos_por_secuencia + nro_datos_a_predecir)
+
+  x = []
+  y = []
+  for secuencia_i in range(nro_total_de_secuencias):
+    pos_ini = secuencia_i
+    pos_fin = pos_ini + nro_datos_por_secuencia
+    x.append(arr[ pos_ini : pos_fin                        , : ])
+    y.append(arr[ pos_fin : pos_fin + nro_datos_a_predecir , : ])
+
+  x = np.array(x)
+  y = np.array(y)
+
+  return x, y
