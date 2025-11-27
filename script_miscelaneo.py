@@ -941,7 +941,7 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
             elif accion == 'moda':
               valor  = df_aux[j].mode() if es_spark == False else df_aux.groupBy(j).count().orderBy(F.desc("count"), F.asc(j)).collect()[0][0]
             elif accion == 'contar':
-              valor  = np.count(df_aux[j]) if es_spark == False else df_aux.agg(count(col(j))).collect()[0][0]
+              valor  = len(df_aux[j]) if es_spark == False else df_aux.agg(count(col(j))).collect()[0][0]
             #print('                       termina la operación',accion)
             cantidades.append(valor)          
             del df_aux
