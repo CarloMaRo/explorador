@@ -903,28 +903,28 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
     #numero_de_datos = len(dataframe)
     cont = 0
     for k in variables:
-      print('entramos al for 1',k)
+      #print('entramos al for 1',k)
       var_analisis    = dataframe[k]
       clases          = var_analisis.unique() if es_spark == False else dataframe.select(col(k)).distinct().select(k).rdd.flatMap(lambda x: x).collect()
-      print('     definimos las clases de',k)
+      #print('     definimos las clases de',k)
 
       datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
       clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in clases ]
 
-      print('     ajustamos los letreros de las clases de',k)
+      #print('     ajustamos los letreros de las clases de',k)
 
       for j in encabezados_nuevos:
-        print('     entramos al for 2',j)
+        #print('     entramos al for 2',j)
         for accion in acciones:
-          print('           entramos al for 3',accion)
+          #print('           entramos al for 3',accion)
           df_aux = pd.DataFrame()
           cantidades = []
           for i in clases:
-            print('                 entramos al for 4',i)
-            print('                       calculamos el df auxiliar')
+            #print('                 entramos al for 4',i)
+            #print('                       calculamos el df auxiliar')
             df_aux = dataframe[dataframe[k] == i].copy() if es_spark == False else dataframe.filter(col(k) == i)
-            print('                       terminamos de calcular el df auxiliar')
-            print('                       inicia la operación',accion)
+            #print('                       terminamos de calcular el df auxiliar')
+            #print('                       inicia la operación',accion)
             #print(j)
             if   accion == 'suma':
               valor  = np.sum(df_aux[j]) if es_spark == False else df_aux.agg(sum(col(j))).collect()[0][0]
@@ -942,10 +942,10 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
               valor  = df_aux[j].mode() if es_spark == False else df_aux.groupBy(j).count().orderBy(F.desc("count"), F.asc(j)).collect()[0][0]
             elif accion == 'contar':
               valor  = np.count(df_aux[j]) if es_spark == False else df_aux.agg(count(col(j))).collect()[0][0]
-            print('                       termina la operación',accion)
+            #print('                       termina la operación',accion)
             cantidades.append(valor)          
             del df_aux
-          print('                 termina el for 4')
+          #print('                 termina el for 4')
           
 
           cantidades = cantidades if (~logaritmo) else np.log(cantidades) if ~es_spark else df_aux.agg(log(col(j))).collect()[0][0]
@@ -965,12 +965,12 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
                              notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores) #, total = numero_de_datos)
 
             renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
-            print('     ',renglones_letrero_mas_grande,'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+            #print('     ',renglones_letrero_mas_grande,'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
 
             if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
               tamanio_fuente = 40
               tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente     
-              print('tamaño de la fuente' ,tamanio_fuente)         
+              #print('tamaño de la fuente' ,tamanio_fuente)         
               ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
               ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
             else:
@@ -994,9 +994,9 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
             ax_i.set_yticks([])
 
             cont += 1
-        print('           termina al for 3')  
-      print('     termina al for 2')
-    print('termina al for 1')
+        #print('           termina al for 3')  
+      #print('     termina al for 2')
+    #print('termina al for 1')
     plt.tight_layout();
 
 def divisor_texto_renglones(texto_original, max_caracteres=25):
