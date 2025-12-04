@@ -828,35 +828,40 @@ def dispersor_clase(dataframe, variable_clase, nro_columnas_subplot, cols_no_gra
 # -------------------------------------------------------------------------
 
 
-def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variable_clases = [], porcentajes = False):
+def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variable_clases = [], porcentajes = False, dicc_bins = {}, dicc_logs = {} ):
     encabezados_nuevos  = dataframe.columns.tolist()
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in cols_no_graficables + variable_clases]  
     col_para_histograma = encabezados_nuevos
     tam                 = len(col_para_histograma)
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
-
+    
     fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
     ax      = ax.flatten()
     cont    = 0
     df_aux  = pd.DataFrame()
     for variable_i in col_para_histograma:
+        dicc_bins[variable_i] = 'auto' if variable_i not in dicc_bins else dicc_bins[variable_i]
+        dicc_logs[variable_i] = False  if variable_i not in dicc_bins else dicc_logs[variable_i]
+
         #print(i)
         if len(variable_clases) == 0:
           df_aux = dataframe.copy()
-          graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = variable_i, porcentajes = porcentajes)
+          graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = variable_i, porcentajes = porcentajes, dicc_bins = dicc_bins, dicc_logs = dicc_logs)
         else:
           clases = dataframe[variable_clases[0]].unique()
           #print(clases)
           for j in clases:
             df_aux = dataframe[dataframe[variable_clases[0]] == j]
-            graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = str(variable_i), porcentajes = porcentajes, clase_a_graficar = j) # str(variable_i)+' - '+str(j)
+            graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = str(variable_i), porcentajes = porcentajes, clase_a_graficar = j, dicc_bins = dicc_bins, dicc_logs = dicc_logs) # str(variable_i)+' - '+str(j)
 
 
         cont += 1
     plt.tight_layout();
   
-def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, clase_a_graficar = ''):
-        axis.hist(df_a_graficar[variable_a_graficar], label = str(variable_a_graficar) + ' - ' + str(clase_a_graficar), density = porcentajes, alpha = 0.2) #bins = 10,
+def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins, dicc_logs, clase_a_graficar = ''):
+        #if variable_a_graficar in dicc_bins:
+        #    axis.hist(df_a_graficar[variable_a_graficar], label = str(variable_a_graficar) + ' - ' + str(clase_a_graficar), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar])
+        axis.hist(df_a_graficar[variable_a_graficar], label = str(variable_a_graficar) + ' - ' + str(clase_a_graficar), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar], log = dicc_logs[variable_a_graficar]) #bins = 10,
         axis.legend(loc="best", fontsize=20)
         #axis.set_yscale('log')
         axis.tick_params(axis='x', labelrotation=90, labelsize=15)
