@@ -828,20 +828,21 @@ def dispersor_clase(dataframe, variable_clase, nro_columnas_subplot, cols_no_gra
 # -------------------------------------------------------------------------
 
 
-def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variable_clases = [], porcentajes = False, dicc_bins = {}, dicc_logs = {} ):
+def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variable_clases = [], porcentajes = False, dicc_bins = {}, lista_var_logs = [] ):
     encabezados_nuevos  = dataframe.columns.tolist()
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in cols_no_graficables + variable_clases]  
     col_para_histograma = encabezados_nuevos
     tam                 = len(col_para_histograma)
     filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
     
+    dicc_logs = {}
     fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
     ax      = ax.flatten()
     cont    = 0
     df_aux  = pd.DataFrame()
     for variable_i in col_para_histograma:
-        dicc_bins[variable_i] = 'auto' if variable_i not in dicc_bins else dicc_bins[variable_i]
-        dicc_logs[variable_i] = False  if variable_i not in dicc_bins else dicc_logs[variable_i]
+        dicc_bins[variable_i] = 'auto' if variable_i not in dicc_bins      else dicc_bins[variable_i]
+        dicc_logs[variable_i] = False  if variable_i not in lista_var_logs else True
 
         #print(i)
         if len(variable_clases) == 0:
