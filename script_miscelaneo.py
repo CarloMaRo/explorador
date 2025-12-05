@@ -841,7 +841,7 @@ def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize
     cont    = 0
     df_aux  = pd.DataFrame()
     for variable_i in col_para_histograma:
-        dicc_bins[variable_i] = 'auto' if variable_i not in dicc_bins      else dicc_bins[variable_i]
+        dicc_bins[variable_i] = 10 if variable_i not in dicc_bins      else dicc_bins[variable_i]
         dicc_logs[variable_i] = False  if variable_i not in lista_var_logs else True
 
         #print(i)
