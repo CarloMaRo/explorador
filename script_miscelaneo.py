@@ -1632,7 +1632,8 @@ def graficador_espectro(x,y,arr_pico, ax, limites_x, variable, unidad_tiempo):
   picos_de_tiempo = [recorto_decimales(k) for k in picos_de_tiempo]
 
   ax.scatter(x[arr_pico], y[arr_pico], facecolor = 'r', label = 'Variable ' + str(variable) + '\nLas frencuencias son:' + str(picos_en_frec)+'  ( muestras / '+unidad_tiempo+' )\nY los tiempos son '+str(picos_de_tiempo)+' ('+unidad_tiempo+')')
-  ax.plot(x, y)
+  #ax.plot(x, y)
+  ax.vlines(x, ymin = 0, ymax = y, color = 'gray', linestyle='--', alpha=0.7)
   ax.set_yscale('log')
   ax.set_xlabel("Frecuencia")
   ax.set_ylabel("Potencia")
