@@ -355,9 +355,15 @@ def value_counts_nans_spark(dataframe, col_con_nan, col_clases_a_mirar):
 # -------------------- PARA CREAR UN MAPA DE CORRELACIONES -------------------- 
 # -----------------------------------------------------------------------------
 
-def mapa_correlaciones(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
+def mapa_correlaciones(lista_df, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True):
+  lista_df_matriz_correlaciones = []
+  for df_i in lista_df:
+    lista_df_matriz_correlaciones.append(df_i.corr())
+  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, lista_vars, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor)
+
+'''def mapa_correlaciones(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
   df_matriz_correlaciones = dataframe.corr()
-  imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente)
+  imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente)'''
 
 
 def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
@@ -365,11 +371,29 @@ def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fue
   imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente)
 
 
+def imprimir_matriz_correlaciones(lista_corr_matriz, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor):
+    encabezados_nuevos = lista_vars
+    nro_de_variables       = len(lista_vars)
+    contador_graficas  = 0
+    tam                = nro_de_variables#np.sum(range(1,nro_de_variables)) if nro_de_variables > 1 else nro_de_variables - 1    # Esta suma es para determinar el número de gráficos que se deben considerar en TOTAL
+    filas              = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1                                   ########################################
 
-def imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
+    figure, axis = plt.subplots(nrows = filas, ncols = nro_columnas_subplot,figsize=figsize_subplots )
+    axis = axis.flatten() if nro_columnas_subplot >1 else [axis]
+
+    for cont_i,encabezado_i in enumerate(encabezados_nuevos):                                                                                                                #########################################
+                sns.set_theme(font_scale=tamanio_fuente)
+                plt.figure(figsize=(dims_hor,dims_vert))
+                heat_map = sns.heatmap(lista_corr_matriz[contador_graficas], linewidths=.05, cmap = 'RdBu', vmin = -1, vmax =1, annot = True, ax = axis[contador_graficas], xticklabels=mostrar_letreros_hor)
+                axis[contador_graficas].set_title(encabezado_i, color='gray')
+                contador_graficas += 1
+    plt.tight_layout();
+
+
+'''def imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
   plt.subplots(figsize=(dims_hor,dims_vert))
   sns.set_theme(font_scale=tamanio_fuente)
-  heat_map = sns.heatmap(df_matriz_correlaciones, linewidths=.05, cmap = 'RdBu', vmin = -1, vmax =1, annot = True)
+  heat_map = sns.heatmap(df_matriz_correlaciones, linewidths=.05, cmap = 'RdBu', vmin = -1, vmax =1, annot = True)'''
    
 def matriz_correlaciones_spark(dataframe):
 
@@ -441,16 +465,18 @@ def dataframe_correlacion_grafico_spark (dataframe, variables_a_comparar, variab
 def graficar_dataframe_correlaciones(df_matriz_correlaciones, variables_a_comparar, variables_a_dejar_en_filas = False, variable_para_ordenar = False, umbral_positivo = 0, umbral_negativo = 0):
   df_matriz_correlaciones = df_matriz_correlaciones[variables_a_comparar]
   #cm                      = sns.light_palette('green', as_cmap = True)
-  cm                      = sns.color_palette('RdBu', as_cmap = True)
+  '''cm                      = sns.color_palette('RdBu', as_cmap = True)'''
+  cm                      = 'RdBu'
 
   if variables_a_dejar_en_filas  != False:
     df_matriz_correlaciones = df_matriz_correlaciones.filter(items = variables_a_dejar_en_filas, axis = 0)
 
   if variable_para_ordenar != False:
     df_matriz_correlaciones.sort_values(variable_para_ordenar, ascending = False, inplace = True)
+    df_matriz_correlaciones = df_matriz_correlaciones.reindex(columns = df_matriz_correlaciones.index)
 
-    nuevo_orden = df_matriz_correlaciones.index.tolist()
-    df_matriz_correlaciones.sort_values(nuevo_orden, axis = 1, ascending = False, inplace = True)
+    '''nuevo_orden = df_matriz_correlaciones.index.tolist()
+    df_matriz_correlaciones.sort_values(nuevo_orden, axis = 1, ascending = False, inplace = True)'''
 
     if (umbral_positivo > 0) & (umbral_negativo < 0):
       limite_de_correlaciones(df_matriz_correlaciones, variable_para_ordenar, umbral_positivo , umbral_negativo)
