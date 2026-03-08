@@ -1009,7 +1009,7 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
             barras = ax_i.bar( clases_a_impr, cantidades, label = mensaje, alpha = 0.4) #bins = 10,
 
             if impr_valores:
-              autoetiquetado(barras = barras, axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
+              autoetiquetado(axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
                              notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores) #, total = numero_de_datos)
 
             renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
@@ -1072,7 +1072,7 @@ def divisor_texto_renglones(texto_original, max_caracteres=25):
     texto_final = '\n'.join(lista_texto_final)
     return texto_final
 
-def autoetiquetado(barras, axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#, total = 0):
+def autoetiquetado(axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#, total = 0):
   total   = 0
   alt_max = 0
   alt_min = 0
