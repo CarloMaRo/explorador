@@ -863,7 +863,8 @@ def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize
     
     dicc_logs = {}
     fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    ax      = ax.flatten()
+    ax      = ax.flatten() if tam > 1 else ax
+
     cont    = 0
     df_aux  = pd.DataFrame()
     for variable_i in col_para_histograma:
@@ -1140,7 +1141,7 @@ def barriador_categoricas_spark(dataframe, nro_columnas_subplot, cols_no_grafica
                            figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo, es_spark = es_spark)
 
 
-def barriador_categoricas_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
+def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
   encabezados         = list(dataframe.columns)
   encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
   encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
@@ -1204,7 +1205,7 @@ def barriador_categoricas_(dataframe, nro_columnas_subplot, cols_no_graficables,
       
   plt.tight_layout();
 
-
+'''
 def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, dicc_vars_esp, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
   encabezados         = list(dataframe.columns)
   encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
@@ -1254,7 +1255,7 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
           df_pandas.sort_index(inplace=True)
 
 
-          '''
+          ###
           if es_spark:      
             df_pandas = dataframe.crosstab(col,var_i).toPandas()
             columna_indice = df_pandas.columns.tolist()[0]
@@ -1264,7 +1265,7 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
             #print(df_pandas)
           else:
             df_pandas = pd.crosstab(dataframe[col],dataframe[var_i], normalize = normalizador)
-          '''
+          ###
 
           if logaritmo:
             arr_sin_ceros = df_pandas.values + 1
@@ -1295,8 +1296,8 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
             ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
 
           cont_graf += 1
-      
-  plt.tight_layout();
+  
+  plt.tight_layout();'''
 
 
 def ajusta_titulo(string):
