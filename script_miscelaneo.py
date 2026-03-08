@@ -873,7 +873,6 @@ def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize
         dicc_logs[variable_i] = False  if variable_i not in lista_var_logs else True
 
         #print(i)
-
         
         if len(variable_clases) == 0:
           df_aux = dataframe.copy()
@@ -899,7 +898,7 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins,
                impr_valores = False, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
         #if variable_a_graficar in dicc_bins:
         #    axis.hist(df_a_graficar[variable_a_graficar], label = str(variable_a_graficar) + ' - ' + str(clase_a_graficar), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar])
-        axis.hist(df_a_graficar[variable_a_graficar], label = str(etiqueta), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar], log = dicc_logs[variable_a_graficar]) #bins = 10,
+        axis.hist(df_a_graficar[variable_a_graficar].dropna(), label = str(etiqueta), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar], log = dicc_logs[variable_a_graficar]) #bins = 10,
 
         if impr_valores:
               autoetiquetado( axes = axis, angulo_rotacion = angulo_rotacion_letrero, 
