@@ -854,7 +854,8 @@ def dispersor_clase(dataframe, variable_clase, nro_columnas_subplot, cols_no_gra
 # -------------------------------------------------------------------------
 
 
-def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variable_clases = [], porcentajes = False, dicc_bins = {}, lista_var_logs = [] ):
+def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variable_clases = [], porcentajes = False, dicc_bins = {}, lista_var_logs = []
+           , tamanio_fuentes = 15, ang_rot_eje_x= 0, ang_rot_eje_y= 0, impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
     encabezados_nuevos  = dataframe.columns.tolist()
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in cols_no_graficables + variable_clases]  
     col_para_histograma = encabezados_nuevos
@@ -863,7 +864,7 @@ def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize
     
     dicc_logs = {}
     fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots)
-    ax      = ax.flatten() if tam > 1 else ax
+    ax      = ax.flatten() if tam > 1 else [ax]
 
     cont    = 0
     df_aux  = pd.DataFrame()
@@ -872,28 +873,42 @@ def histogrameador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize
         dicc_logs[variable_i] = False  if variable_i not in lista_var_logs else True
 
         #print(i)
+
+        
         if len(variable_clases) == 0:
           df_aux = dataframe.copy()
-          graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = variable_i, porcentajes = porcentajes, dicc_bins = dicc_bins, dicc_logs = dicc_logs)
+          mensaje = divisor_texto_renglones(str(variable_i))
+          graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = variable_i, porcentajes = porcentajes, dicc_bins = dicc_bins, dicc_logs = dicc_logs, tamanio_fuentes =tamanio_fuentes,
+                     ang_rot_eje_x= ang_rot_eje_x, ang_rot_eje_y= ang_rot_eje_y, etiqueta = mensaje, impr_valores= impr_valores, notacion_cientifica=notacion_cientifica,
+                     angulo_rotacion_letrero = angulo_rotacion_letrero, tamanio_valores = tamanio_valores, logaritmo = logaritmo)
         else:
           clases = dataframe[variable_clases[0]].unique()
           #print(clases)
           for j in clases:
             df_aux = dataframe[dataframe[variable_clases[0]] == j]
-            graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = str(variable_i), porcentajes = porcentajes, clase_a_graficar = j, dicc_bins = dicc_bins, dicc_logs = dicc_logs) # str(variable_i)+' - '+str(j)
+            mensaje = divisor_texto_renglones(str(variable_i) + ' - ' + str(j))
+            graficador(axis = ax[cont], df_a_graficar = df_aux, variable_a_graficar = str(variable_i), porcentajes = porcentajes, clase_a_graficar = j, dicc_bins = dicc_bins, dicc_logs = dicc_logs,
+                       tamanio_fuentes=tamanio_fuentes,ang_rot_eje_x= ang_rot_eje_x, ang_rot_eje_y= ang_rot_eje_y,etiqueta = mensaje, impr_valores= impr_valores, notacion_cientifica=notacion_cientifica,
+                       angulo_rotacion_letrero = angulo_rotacion_letrero, tamanio_valores = tamanio_valores, logaritmo = logaritmo ) # str(variable_i)+' - '+str(j)
 
 
         cont += 1
     plt.tight_layout();
   
-def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins, dicc_logs, clase_a_graficar = ''):
+def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins, dicc_logs, clase_a_graficar = '',tamanio_fuentes =15,ang_rot_eje_x= 0, ang_rot_eje_y= 0, etiqueta = '',
+               impr_valores = False, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
         #if variable_a_graficar in dicc_bins:
         #    axis.hist(df_a_graficar[variable_a_graficar], label = str(variable_a_graficar) + ' - ' + str(clase_a_graficar), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar])
-        axis.hist(df_a_graficar[variable_a_graficar], label = str(variable_a_graficar) + ' - ' + str(clase_a_graficar), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar], log = dicc_logs[variable_a_graficar]) #bins = 10,
-        axis.legend(loc="best", fontsize=20)
+        axis.hist(df_a_graficar[variable_a_graficar], label = str(etiqueta), density = porcentajes, alpha = 0.2, bins = dicc_bins[variable_a_graficar], log = dicc_logs[variable_a_graficar]) #bins = 10,
+
+        if impr_valores:
+              autoetiquetado( axes = axis, angulo_rotacion = angulo_rotacion_letrero, 
+                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores)
+
+        axis.legend(loc="best", fontsize=tamanio_fuentes)
         #axis.set_yscale('log')
-        axis.tick_params(axis='x', labelrotation=90, labelsize=15)
-        axis.tick_params(axis='y', labelrotation=90, labelsize=15)
+        axis.tick_params(axis='x', labelrotation=ang_rot_eje_x, labelsize=tamanio_fuentes)
+        axis.tick_params(axis='y', labelrotation=ang_rot_eje_y, labelsize=tamanio_fuentes)
         #axis.set_xlabel(i)
         #axis.set_title(i)
 
