@@ -1155,6 +1155,72 @@ def barriador_categoricas_spark(dataframe, nro_columnas_subplot, cols_no_grafica
                            figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo, es_spark = es_spark)
 
 
+def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, 
+                          una_barra = False, porcentaje = False, es_spark = False, logaritmo = False, invertir_vars = False):
+    
+    encabezados = list(dataframe.columns)
+    encabezados_nuevos = [i for i in encabezados if i not in cols_no_graficables]
+    encabezados_nuevos = [i for i in encabezados_nuevos if i not in variables]
+    tam = len(encabezados_nuevos)
+    filas = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
+
+    fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots) if tam > 1 else plt.subplots(figsize = figsize_subplots)
+    ax = ax.flatten() if tam > 1 else [ax] # Forzamos lista para iterar uniformemente
+
+    normalizador = 'index' if porcentaje == True else porcentaje
+
+    for j in variables:
+        for i, col in enumerate(encabezados_nuevos):
+            try: 
+                ax_i = ax[i]
+            except:
+                ax_i = ax
+
+            # --- Lógica de cruce de variables ---
+            if es_spark:      
+                df_pandas = dataframe.crosstab(col, j).toPandas()
+                columna_indice = df_pandas.columns.tolist()[0]
+                df_pandas.index = df_pandas[columna_indice]
+                del df_pandas[columna_indice]
+            else:
+                # Si invertir_vars es True, cruzamos (j, col) en lugar de (col, j)
+                if invertir_vars:
+                    df_pandas = pd.crosstab(dataframe[j], dataframe[col], normalize = normalizador)
+                else:
+                    df_pandas = pd.crosstab(dataframe[col], dataframe[j], normalize = normalizador)
+
+            if logaritmo:
+                arr_sin_ceros = df_pandas.values + 1
+                df_pandas[:] = np.log(arr_sin_ceros)
+
+            # --- Preparación de etiquetas de eje X ---
+            datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+            etiquetas_eje_x = [i for i in df_pandas.index.tolist()]
+            clases_a_impr = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x]
+            renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
+
+            # --- Graficación ---
+            df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
+            ax_i.set_xticklabels(clases_a_impr)
+
+            # Ajuste de títulos según la inversión
+            label_x = j if invertir_vars else col
+            ax_i.set_xlabel(divisor_texto_renglones(label_x), fontsize = 20)
+            ax_i.legend(title=(col if invertir_vars else j), loc="best", fontsize=15)
+
+            # --- Formateo de ticks ---
+            if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
+                tamanio_fuente = 40 / renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else 40
+                ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+                ax_i.tick_params(axis='y', labelrotation=0, labelsize=20) # Corregido rotación y para legibilidad
+            else: 
+                ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
+    
+    plt.tight_layout()
+
+
+
+'''
 def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
   encabezados         = list(dataframe.columns)
   encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
@@ -1220,98 +1286,7 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
   plt.tight_layout();
 
 '''
-def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, dicc_vars_esp, una_barra = False, porcentaje = False, es_spark = False, logaritmo = False):
-  encabezados         = list(dataframe.columns)
-  encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
-  encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
 
-  lista_vars_especiales = list(dicc_vars_esp.keys())
-  graf_total_esp = 0
-  for var_esp_i in lista_vars_especiales:
-    graf_total_esp += len(dicc_vars_esp[var_esp_i])
-
-  tam                 = len(encabezados_nuevos)*graf_total_esp
-  filas               = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1
-
-  fig, ax = plt.subplots(ncols = nro_columnas_subplot, nrows = filas, figsize = figsize_subplots) if tam > 1 else plt.subplots(figsize = figsize_subplots)
-  ax      = ax.flatten() if tam > 1 else ax
-
-  if porcentaje == True:
-    normalizador = 'index'
-  else:
-    normalizador = porcentaje
-
-  for var_i in variables:
-
-    cont_graf = 0
-    for cont, col in enumerate(encabezados_nuevos):
-      
-      for var_esp_i in lista_vars_especiales:
-          
-        lista_func_especiales = dicc_vars_esp[var_esp_i]
-        dicc_aux = {}
-        for func_i in lista_func_especiales:
-          dicc_aux[var_esp_i] = [func_i]
-          
-          try: 
-            ax_i = ax[cont_graf]
-          except:
-            ax_i = ax
-
-          df_pandas = crosstab_plus(dataframe,col, var_i, dicc_colsfunc_agrupables = dicc_aux, es_spark = es_spark)
-
-          cols_actuales = df_pandas.columns
-          cols   = cols_actuales.get_level_values('columnas')
-          funcs  = cols_actuales.get_level_values('funciones')
-          clases = cols_actuales.get_level_values(var_i)
-          multi_indice = pd.MultiIndex.from_arrays( [clases, funcs, cols ], names = [var_i,"funciones","columnas"] )
-          df_pandas = pd.DataFrame(df_pandas.values, index = df_pandas.index, columns = multi_indice)
-          df_pandas.sort_index(inplace=True)
-
-
-          ###
-          if es_spark:      
-            df_pandas = dataframe.crosstab(col,var_i).toPandas()
-            columna_indice = df_pandas.columns.tolist()[0]
-            #print(columna_indice)
-            df_pandas.index = df_pandas[columna_indice]
-            del df_pandas[columna_indice]
-            #print(df_pandas)
-          else:
-            df_pandas = pd.crosstab(dataframe[col],dataframe[var_i], normalize = normalizador)
-          ###
-
-          if logaritmo:
-            arr_sin_ceros = df_pandas.values + 1
-            df_pandas[:] = np.log(arr_sin_ceros)
-
-          #df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
-
-          datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
-          etiquetas_eje_x = [k for k in df_pandas.index.tolist()]
-          clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x ]
-          renglones_letrero_mas_grande = np.max([len(str(k).split('\n')) for k in clases_a_impr])
-
-          df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)#, xticks = clases_a_impr)
-          #plt.xticks(ticks = clases_a_impr)
-          #ax_i.xticks(ticks = clases_a_impr)
-          ax_i.set_xticklabels(clases_a_impr)
-
-          ax_i.set_xlabel(divisor_texto_renglones(col), fontsize = 20)
-          ax_i.legend(loc="best", fontsize=20)
-          #ax_i.set_yscale('log')
-
-          if ( renglones_letrero_mas_grande !=1 ) and (len(clases_a_impr)>2):
-            tamanio_fuente = 40
-            tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente              
-            ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
-            ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
-          else: 
-            ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
-
-          cont_graf += 1
-  
-  plt.tight_layout();'''
 
 
 def ajusta_titulo(string):
