@@ -1220,7 +1220,7 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
               else: 
                   ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
             except:
-               print('error en las variables <<<',col,'>>> y <<<',j,'>>>', error_crosstab)
+               print('error en las variables <<<'+str(col)+'>>> y <<<'+str(j)+'>>>', error_crosstab)
     plt.tight_layout()
 
 
