@@ -1176,46 +1176,51 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
             except:
                 ax_i = ax
 
-            # --- Lógica de cruce de variables ---
-            if es_spark:      
-                df_pandas = dataframe.crosstab(col, j).toPandas()
-                columna_indice = df_pandas.columns.tolist()[0]
-                df_pandas.index = df_pandas[columna_indice]
-                del df_pandas[columna_indice]
-            else:
-                # Si invertir_vars es True, cruzamos (j, col) en lugar de (col, j)
-                if invertir_vars:
-                    df_pandas = pd.crosstab(dataframe[j], dataframe[col], normalize = normalizador)
-                else:
-                    df_pandas = pd.crosstab(dataframe[col], dataframe[j], normalize = normalizador)
+            try:
+              # --- Lógica de cruce de variables ---
+              if es_spark:      
+                  df_pandas = dataframe.crosstab(col, j).toPandas()
+                  columna_indice = df_pandas.columns.tolist()[0]
+                  df_pandas.index = df_pandas[columna_indice]
+                  del df_pandas[columna_indice]
+              else:
+                  # Si invertir_vars es True, cruzamos (j, col) en lugar de (col, j)
 
-            if logaritmo:
-                arr_sin_ceros = df_pandas.values + 1
-                df_pandas[:] = np.log(arr_sin_ceros)
+                    if invertir_vars:
+                        df_pandas = pd.crosstab(dataframe[j], dataframe[col], normalize = normalizador)
+                    else:
+                        df_pandas = pd.crosstab(dataframe[col], dataframe[j], normalize = normalizador)
+                    
+                    error_crosstab = 'ERROR EN CROSSTAB' if (len(df_pandas) < 1) else ''
 
-            # --- Preparación de etiquetas de eje X ---
-            datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
-            etiquetas_eje_x = [i for i in df_pandas.index.tolist()]
-            clases_a_impr = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x]
-            renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
+              if logaritmo:
+                  arr_sin_ceros = df_pandas.values + 1
+                  df_pandas[:] = np.log(arr_sin_ceros)
 
-            # --- Graficación ---
-            df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
-            ax_i.set_xticklabels(clases_a_impr)
+              # --- Preparación de etiquetas de eje X ---
+              datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
+              etiquetas_eje_x = [i for i in df_pandas.index.tolist()]
+              clases_a_impr = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x]
+              renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
 
-            # Ajuste de títulos según la inversión
-            label_x = j if invertir_vars else col
-            ax_i.set_xlabel(divisor_texto_renglones(label_x), fontsize = 20)
-            ax_i.legend(title=(col if invertir_vars else j), loc="best", fontsize=15)
+              # --- Graficación ---
+              df_pandas.plot(kind='bar', ax=ax_i, stacked = una_barra)
+              ax_i.set_xticklabels(clases_a_impr)
 
-            # --- Formateo de ticks ---
-            if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
-                tamanio_fuente = 40 / renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else 40
-                ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
-                ax_i.tick_params(axis='y', labelrotation=0, labelsize=20) # Corregido rotación y para legibilidad
-            else: 
-                ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
-    
+              # Ajuste de títulos según la inversión
+              label_x = j if invertir_vars else col
+              ax_i.set_xlabel(divisor_texto_renglones(label_x), fontsize = 20)
+              ax_i.legend(title=(col if invertir_vars else j), loc="best", fontsize=15)
+
+              # --- Formateo de ticks ---
+              if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
+                  tamanio_fuente = 40 / renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else 40
+                  ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+                  ax_i.tick_params(axis='y', labelrotation=0, labelsize=20) # Corregido rotación y para legibilidad
+              else: 
+                  ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
+            except:
+               print('error en las variables <<<',col,'>>> y <<<',j,'>>>', error_crosstab)
     plt.tight_layout()
 
 
