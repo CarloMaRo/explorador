@@ -928,16 +928,16 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins,
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,tamanio_valores,
               impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, logaritmo = False, angulo_rotacion_etiquetas_x = 0):
    
-   barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
-              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo,
+   barreador_(tamanio_valores, dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica,  logaritmo = logaritmo,
               angulo_rotacion_etiquetas_x= angulo_rotacion_etiquetas_x)
   
 
 def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones, tamanio_valores,
               impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, logaritmo = False):
    
-   barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
-              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo, es_spark = True)
+   barreador_(tamanio_valores,dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, logaritmo = logaritmo, es_spark = True)
 
 
 def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,tamanio_valores,
