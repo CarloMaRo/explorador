@@ -925,18 +925,18 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins,
 # --(vars categóricas de MI interes VS vars numéricas agrupadas por suma)--
 # --VALIDAR QUE LOS DATOS NO TENGAN NaN
 
-def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,tamanio_valores,
+def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
               impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, logaritmo = False, angulo_rotacion_etiquetas_x = 0):
    
-   barreador_(tamanio_valores, dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+   barreador_( dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
               impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica,  logaritmo = logaritmo,
               angulo_rotacion_etiquetas_x= angulo_rotacion_etiquetas_x)
   
 
-def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones, tamanio_valores,
+def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones, 
               impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, logaritmo = False):
    
-   barreador_(tamanio_valores,dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
+   barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
               impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, logaritmo = logaritmo, es_spark = True)
 
 
@@ -1014,7 +1014,7 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
 
             if impr_valores:
               autoetiquetado(axes = ax_i, angulo_rotacion = angulo_rotacion_letrero, 
-                             notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores) #, total = numero_de_datos)
+                             notacion_cientif = notacion_cientifica) #, total = numero_de_datos)
 
             renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
             #print('     ',renglones_letrero_mas_grande,'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
@@ -1080,7 +1080,7 @@ def divisor_texto_renglones(texto_original, max_caracteres=25):
     texto_final = '\n'.join(lista_texto_final)
     return texto_final
 
-def autoetiquetado(axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#, total = 0):
+def autoetiquetado(axes, angulo_rotacion, notacion_cientif):#, total = 0):
   total   = 0
   alt_max = 0
   alt_min = 0
