@@ -926,10 +926,11 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins,
 # --VALIDAR QUE LOS DATOS NO TENGAN NaN
 
 def barreador(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
-              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False):
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, logaritmo = False, angulo_rotacion_etiquetas_x = 0):
    
    barreador_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables, figsize_subplots = figsize_subplots, variables = variables, acciones = acciones,
-              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo)
+              impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, tamanio_valores = tamanio_valores, logaritmo = logaritmo,
+              angulo_rotacion_etiquetas_x= angulo_rotacion_etiquetas_x)
   
 
 def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
@@ -940,7 +941,7 @@ def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsiz
 
 
 def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
-              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, es_spark = False, logaritmo = False):
+              impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True, tamanio_valores = 15, es_spark = False, logaritmo = False,  angulo_rotacion_etiquetas_x= 0):
     encabezados         = list(dataframe.columns)
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
     encabezados_nuevos  = [i for i in encabezados_nuevos if i not in variables]
@@ -1022,10 +1023,10 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
               tamanio_fuente = 40
               tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente     
               #print('tamaño de la fuente' ,tamanio_fuente)         
-              ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
+              ax_i.tick_params(axis='x', labelrotation=angulo_rotacion_etiquetas_x, labelsize=tamanio_fuente)
               ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
             else:
-              ax_i.tick_params(axis='x',  labelsize=20)
+              ax_i.tick_params(axis='x', labelrotation=angulo_rotacion_etiquetas_x,  labelsize=20)
               ax_i.tick_params(axis='y',  labelsize=20) 
             """
             tamanio_fuente = 40
