@@ -905,7 +905,7 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins,
                              notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores)
         
         etiquetas_eje_x  = [item.get_text() for item in axis.get_xticklabels()]
-        labels_divididas = [divisor_texto_renglones(label_i, max_caracteres=15) for label_i in etiquetas_eje_x]
+        labels_divididas = [divisor_texto_renglones(str(label_i), max_caracteres=15) for label_i in etiquetas_eje_x]
         axis.set_xticklabels(labels_divididas)
 
         axis.legend(loc="best", fontsize=tamanio_fuentes)
@@ -960,7 +960,7 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
       #print('     definimos las clases de',k)
 
       datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
-      clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in clases ]
+      clases_a_impr   = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(str(clase_i)) for clase_i in clases ]
 
       #print('     ajustamos los letreros de las clases de',k)
 
@@ -1008,7 +1008,7 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
 
           if j != k:
 
-            mensaje = divisor_texto_renglones(k +' VS '+accion+'('+ j+')')
+            mensaje = divisor_texto_renglones(str(k +' VS '+accion+'('+ j+')'))
             barras = ax_i.bar( clases_a_impr, cantidades, label = mensaje, alpha = 0.4) #bins = 10,
 
             if impr_valores:
@@ -1033,7 +1033,7 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
             tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente
             """
 
-            etiquetas_eje_x = [divisor_texto_renglones(etiqueta_i) for etiqueta_i in clases_a_impr]
+            etiquetas_eje_x = [divisor_texto_renglones(str(etiqueta_i)) for etiqueta_i in clases_a_impr]
             ax_i.set_xticklabels(etiquetas_eje_x)
 
             ax_i.legend(loc="best", fontsize=20)
@@ -1204,7 +1204,7 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
               # --- Preparación de etiquetas de eje X ---
               datos_numericos = (int, float, complex, np.integer, np.floating, np.complexfloating)
               etiquetas_eje_x = [i for i in df_pandas.index.tolist()]
-              clases_a_impr = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(clase_i) for clase_i in etiquetas_eje_x]
+              clases_a_impr = [clase_i if isinstance(clase_i, datos_numericos) else divisor_texto_renglones(str(clase_i)) for clase_i in etiquetas_eje_x]
               renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
 
               # --- Graficación ---
@@ -1213,7 +1213,7 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
 
               # Ajuste de títulos según la inversión
               label_x = j if invertir_vars else col
-              ax_i.set_xlabel(divisor_texto_renglones(label_x), fontsize = 20)
+              ax_i.set_xlabel(divisor_texto_renglones(str(label_x)), fontsize = 20)
               ax_i.legend(title=divisor_texto_renglones(str(col) if invertir_vars else str(j)), loc="best", fontsize=15)
 
               # --- Formateo de ticks ---
