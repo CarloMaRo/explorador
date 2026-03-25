@@ -1125,7 +1125,7 @@ def autoetiquetado(axes, angulo_rotacion, notacion_cientif, tamanio_letreros):#,
                   #textcoords = "offset points",
                   ha         = 'center',
                   va         = 'center',#'bottom',
-                  size       = tamanio_letreros,#15,
+                  #size       = tamanio_letreros,#15,
                   color      = 'k' #'white
                   )
 
