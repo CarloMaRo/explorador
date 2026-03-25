@@ -1019,7 +1019,7 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
             renglones_letrero_mas_grande = np.max([len(str(i).split('\n')) for i in clases_a_impr])
             #print('     ',renglones_letrero_mas_grande,'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
 
-            if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
+            '''if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
               tamanio_fuente = 40
               tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente     
               #print('tamaño de la fuente' ,tamanio_fuente)         
@@ -1027,12 +1027,15 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
               ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
             else:
               ax_i.tick_params(axis='x', labelrotation=angulo_rotacion_etiquetas_x,  labelsize=20)
-              ax_i.tick_params(axis='y',  labelsize=20) 
+              ax_i.tick_params(axis='y',  labelsize=20) '''
             """
             tamanio_fuente = 40
             #tamanio_fuente = ancho_barra/renglones_letrero_mas_grande*0.8 if ancho_barra and (tamanio_fuente*renglones_letrero_mas_grande > ancho_barra) else tamanio_fuente
             tamanio_fuente = tamanio_fuente/renglones_letrero_mas_grande if renglones_letrero_mas_grande > 1 else tamanio_fuente
             """
+            ax_i.tick_params(axis='x', labelrotation=angulo_rotacion_etiquetas_x)
+            ax_i.tick_params(axis='y') 
+
 
             etiquetas_eje_x = [divisor_texto_renglones(str(etiqueta_i)) for etiqueta_i in clases_a_impr]
             ax_i.set_xticklabels(etiquetas_eje_x)
