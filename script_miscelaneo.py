@@ -903,6 +903,10 @@ def graficador(axis, df_a_graficar, variable_a_graficar, porcentajes, dicc_bins,
         if impr_valores:
               autoetiquetado( axes = axis, angulo_rotacion = angulo_rotacion_letrero, 
                              notacion_cientif = notacion_cientifica, tamanio_letreros = tamanio_valores)
+        
+        etiquetas_eje_x  = [item.get_text() for item in axis.get_xticklabels()]
+        labels_divididas = [divisor_texto_renglones(label_i, max_caracteres=15) for label_i in etiquetas_eje_x]
+        axis.set_xticklabels(labels_divididas)
 
         axis.legend(loc="best", fontsize=tamanio_fuentes)
         #axis.set_yscale('log')
