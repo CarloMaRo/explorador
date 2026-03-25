@@ -940,7 +940,7 @@ def barreador_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsiz
               impr_valores = impr_valores, angulo_rotacion_letrero = angulo_rotacion_letrero, notacion_cientifica = notacion_cientifica, logaritmo = logaritmo, es_spark = True)
 
 
-def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,tamanio_valores,
+def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, acciones,
               impr_valores = True, angulo_rotacion_letrero = 0, notacion_cientifica = True,  es_spark = False, logaritmo = False,  angulo_rotacion_etiquetas_x= 0):
     encabezados         = list(dataframe.columns)
     encabezados_nuevos  = [i for i in encabezados if i not in cols_no_graficables]
