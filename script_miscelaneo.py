@@ -1040,7 +1040,8 @@ def barreador_(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_sub
             etiquetas_eje_x = [divisor_texto_renglones(str(etiqueta_i)) for etiqueta_i in clases_a_impr]
             ax_i.set_xticklabels(etiquetas_eje_x)
 
-            ax_i.legend(loc="best", fontsize=20)
+            #ax_i.legend(loc="best", fontsize=20)
+            ax_i.legend(loc="best")
             #ax_i.set_yscale('log')
             ###########ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
             ###########ax_i.tick_params(axis='y', labelrotation=90, labelsize=tamanio_fuente)
