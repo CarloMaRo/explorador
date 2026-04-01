@@ -1165,7 +1165,7 @@ def barriador_categoricas_spark(dataframe, nro_columnas_subplot, cols_no_grafica
 
 
 def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, 
-                          una_barra = False, porcentaje = False, es_spark = False, logaritmo = False, invertir_vars = False):
+                          una_barra = False, porcentaje = False, es_spark = False, logaritmo = False, invertir_vars = False,ang_etiqueta_x = 0):
     
     encabezados = list(dataframe.columns)
     encabezados_nuevos = [i for i in encabezados if i not in cols_no_graficables]
@@ -1227,7 +1227,7 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
                   ax_i.tick_params(axis='x', labelrotation=90, labelsize=tamanio_fuente)
                   ax_i.tick_params(axis='y', labelrotation=0, labelsize=20) # Corregido rotación y para legibilidad
               else: 
-                  ax_i.tick_params(axis='x', labelrotation=0, labelsize=20)
+                  ax_i.tick_params(axis='x', labelrotation=ang_etiqueta_x)
             except:
                print('error en las variables <<<'+str(col)+'>>> y <<<'+str(j)+'>>>', error_crosstab)
     plt.tight_layout()
