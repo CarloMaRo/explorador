@@ -1154,18 +1154,18 @@ def ajuste_etiqueta_numero(texto):
 # _________________________________________________________________________
 # ----------(vars categóricas VS vars categóricas de MI interes)-----------
 
-def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False):
+def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False, poner_leyenda = True):
    barriador_categoricas_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables,
-                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo)
+                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo, poner_leyenda = True)
 
 
-def barriador_categoricas_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False, es_spark = True):
+def barriador_categoricas_spark(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, una_barra = False, porcentaje = False, logaritmo = False, es_spark = True, poner_leyenda = True):
    barriador_categoricas_(dataframe = dataframe, nro_columnas_subplot = nro_columnas_subplot, cols_no_graficables = cols_no_graficables,
-                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo, es_spark = es_spark)
+                           figsize_subplots = figsize_subplots, variables = variables, una_barra = una_barra, porcentaje = porcentaje, logaritmo = logaritmo, es_spark = es_spark, poner_leyenda = True)
 
 
 def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, figsize_subplots, variables, 
-                          una_barra = False, porcentaje = False, es_spark = False, logaritmo = False, invertir_vars = False,ang_etiqueta_x = 0):
+                          una_barra = False, porcentaje = False, es_spark = False, logaritmo = False, invertir_vars = False,ang_etiqueta_x = 0, poner_leyenda = True):
     
     encabezados = list(dataframe.columns)
     encabezados_nuevos = [i for i in encabezados if i not in cols_no_graficables]
@@ -1219,7 +1219,9 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
               # Ajuste de títulos según la inversión
               label_x = j if invertir_vars else col
               ax_i.set_xlabel(divisor_texto_renglones(str(label_x)), fontsize = 20)
-              ax_i.legend(title=divisor_texto_renglones(str(col) if invertir_vars else str(j)), loc="best", fontsize=15)
+
+              if poner_leyenda:
+                ax_i.legend(title=divisor_texto_renglones(str(col) if invertir_vars else str(j)), loc="best", fontsize=15)
 
               # --- Formateo de ticks ---
               if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
