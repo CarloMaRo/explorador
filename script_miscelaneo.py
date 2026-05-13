@@ -1219,9 +1219,9 @@ def barriador_categoricas(dataframe, nro_columnas_subplot, cols_no_graficables, 
               # Ajuste de títulos según la inversión
               label_x = j if invertir_vars else col
               ax_i.set_xlabel(divisor_texto_renglones(str(label_x)), fontsize = 20)
-
-              if poner_leyenda:
-                ax_i.legend(title=divisor_texto_renglones(str(col) if invertir_vars else str(j)), loc="best", fontsize=15)
+              ax_i.legend(title=divisor_texto_renglones(str(col) if invertir_vars else str(j)), loc="best", fontsize=15)
+              if poner_leyenda==False:
+                 ax_i.get_legend().remove() 
 
               # --- Formateo de ticks ---
               if (renglones_letrero_mas_grande != 1) and (len(clases_a_impr) > 2):
