@@ -355,23 +355,23 @@ def value_counts_nans_spark(dataframe, col_con_nan, col_clases_a_mirar):
 # -------------------- PARA CREAR UN MAPA DE CORRELACIONES -------------------- 
 # -----------------------------------------------------------------------------
 
-def mapa_correlaciones(lista_df, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True):
+def mapa_correlaciones(lista_df, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True, blanco_negro = False):
   lista_df_matriz_correlaciones = []
   for df_i in lista_df:
     lista_df_matriz_correlaciones.append(df_i.corr())
-  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, lista_vars, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor)
+  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, lista_vars, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = blanco_negro)
 
 '''def mapa_correlaciones(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
   df_matriz_correlaciones = dataframe.corr()
   imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente)'''
 
 
-def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
+def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8, blanco_negro = False):
   df_matriz_correlaciones = matriz_correlaciones_spark(dataframe)
-  imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente)
+  imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente, blanco_negro = blanco_negro)
 
 
-def imprimir_matriz_correlaciones(lista_corr_matriz, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor):
+def imprimir_matriz_correlaciones(lista_corr_matriz, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = False):
     encabezados_nuevos = lista_vars
     nro_de_variables       = len(lista_vars)
     contador_graficas  = 0
@@ -381,10 +381,12 @@ def imprimir_matriz_correlaciones(lista_corr_matriz, lista_vars, nro_columnas_su
     figure, axis = plt.subplots(nrows = filas, ncols = nro_columnas_subplot,figsize=figsize_subplots )
     axis = axis.flatten() if nro_columnas_subplot >1 else [axis]
 
+    mapa_de_color = 'RdBu' if blanco_negro==False else 'Greys'
+
     for cont_i,encabezado_i in enumerate(encabezados_nuevos):                                                                                                                #########################################
                 sns.set_theme(font_scale=tamanio_fuente)
                 plt.figure(figsize=(dims_hor,dims_vert))
-                heat_map = sns.heatmap(lista_corr_matriz[contador_graficas], linewidths=.05, cmap = 'RdBu', vmin = -1, vmax =1, annot = True, ax = axis[contador_graficas], xticklabels=mostrar_letreros_hor)
+                heat_map = sns.heatmap(lista_corr_matriz[contador_graficas], linewidths=.05, cmap = mapa_de_color, vmin = -1, vmax =1, annot = True, ax = axis[contador_graficas], xticklabels=mostrar_letreros_hor)
                 axis[contador_graficas].set_title(encabezado_i, color='gray')
                 contador_graficas += 1
     plt.tight_layout();
