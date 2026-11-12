@@ -355,11 +355,11 @@ def value_counts_nans_spark(dataframe, col_con_nan, col_clases_a_mirar):
 # -------------------- PARA CREAR UN MAPA DE CORRELACIONES -------------------- 
 # -----------------------------------------------------------------------------
 
-def mapa_correlaciones(lista_df, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True, blanco_negro = False):
+def mapa_correlaciones(lista_df, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True, blanco_negro = False, lista_titulos = False):
   lista_df_matriz_correlaciones = []
   for df_i in lista_df:
     lista_df_matriz_correlaciones.append(df_i.corr())
-  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, lista_vars, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = blanco_negro)
+  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = blanco_negro, lista_titulos = lista_titulos)
 
 '''def mapa_correlaciones(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
   df_matriz_correlaciones = dataframe.corr()
@@ -371,24 +371,23 @@ def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fue
   imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente, blanco_negro = blanco_negro)
 
 
-def imprimir_matriz_correlaciones(lista_corr_matriz, lista_vars, nro_columnas_subplot, figsize_subplots, tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = False):
-    encabezados_nuevos = lista_vars
-    nro_de_variables       = len(lista_vars)
-    contador_graficas  = 0
+def imprimir_matriz_correlaciones(lista_corr_matriz, nro_columnas_subplot, figsize_subplots, tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = False, lista_titulos = False):
+    encabezados_nuevos = lista_titulos
+    nro_de_variables   = len(lista_corr_matriz)
     tam                = nro_de_variables#np.sum(range(1,nro_de_variables)) if nro_de_variables > 1 else nro_de_variables - 1    # Esta suma es para determinar el número de gráficos que se deben considerar en TOTAL
     filas              = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1                                   ########################################
 
     figure, axis = plt.subplots(nrows = filas, ncols = nro_columnas_subplot,figsize=figsize_subplots )
-    axis = axis.flatten() if nro_columnas_subplot >1 else [axis]
+    axis = axis.flatten() if nro_de_variables >1 else [axis]
 
     mapa_de_color = 'RdBu' if blanco_negro==False else 'Greys'
 
-    for cont_i,encabezado_i in enumerate(encabezados_nuevos):                                                                                                                #########################################
+    for cont_i,encabezado_i in enumerate(lista_corr_matriz):                                                                                                                #########################################
                 sns.set_theme(font_scale=tamanio_fuente)
                 plt.figure(figsize=(dims_hor,dims_vert))
-                heat_map = sns.heatmap(lista_corr_matriz[contador_graficas], linewidths=.05, cmap = mapa_de_color, vmin = -1, vmax =1, annot = True, ax = axis[contador_graficas], xticklabels=mostrar_letreros_hor)
-                axis[contador_graficas].set_title(encabezado_i, color='gray')
-                contador_graficas += 1
+                heat_map = sns.heatmap(lista_corr_matriz[cont_i], linewidths=.05, cmap = mapa_de_color, vmin = -1, vmax =1, annot = True, ax = axis[cont_i], xticklabels=mostrar_letreros_hor)
+                if  encabezados_nuevos==True:
+                  axis[cont_i].set_title(lista_titulos[cont_i], color='gray')
     plt.tight_layout();
 
 
