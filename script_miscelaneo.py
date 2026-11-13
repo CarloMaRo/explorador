@@ -449,15 +449,16 @@ def test_shapiro_wilk(dataframe, alpha = 0.05, verbose = False):
 # -------------------- PARA CREAR UN MAPA DE CORRELACIONES -------------------- 
 # -----------------------------------------------------------------------------
 
-def mapa_correlaciones(lista_df, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True, blanco_negro = False, lista_titulos = False):
+def mapa_correlaciones(lista_df, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 0.8, dims_hor =10,dims_vert=5, mostrar_letreros_hor=True, blanco_negro = False, lista_titulos = False, metodo = 'pearson'):
   lista_df_matriz_correlaciones = []
-  for df_i in lista_df:
-    lista_df_matriz_correlaciones.append(df_i.corr())
-  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = blanco_negro, lista_titulos = lista_titulos)
 
-'''def mapa_correlaciones(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8):
-  df_matriz_correlaciones = dataframe.corr()
-  imprimir_matriz_correlaciones(df_matriz_correlaciones, dims_vert = dims_vert, dims_hor = dims_hor, tamanio_fuente = tamanio_fuente)'''
+  metodo = metodo.lower()
+  if metodo not in ['pearson', 'spearman', 'kendall']:
+        raise ValueError("El parámetro 'metodo' debe ser 'pearson', 'spearman' o 'kendall'.")
+
+  for df_i in lista_df:
+    lista_df_matriz_correlaciones.append(df_i.corr(method=metodo, numeric_only=True))
+  imprimir_matriz_correlaciones(lista_df_matriz_correlaciones, nro_columnas_subplot,  figsize_subplots,  tamanio_fuente, dims_hor ,dims_vert, mostrar_letreros_hor, blanco_negro = blanco_negro, lista_titulos = lista_titulos)
 
 
 def mapa_correlaciones_spark(dataframe, dims_vert = 5, dims_hor = 5, tamanio_fuente = 0.8, blanco_negro = False):
