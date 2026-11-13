@@ -24,6 +24,8 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import r2_score
 
+from scipy import stats
+
 import cv2
 
 try:
@@ -350,6 +352,98 @@ def value_counts_nans_spark(dataframe, col_con_nan, col_clases_a_mirar):
   #clases_con_nan       = dataframe.filter( col(col_con_nan).isNull() ).select(col_clases_a_mirar).distinct().rdd.flatMap(lambda x: x).collect()
   df_nans_en_columna = dataframe.groupby(col_clases_a_mirar).agg( ( sum(col(col_con_nan).isNull().cast("int")) ) .alias("num_nans") )
   return df_nans_en_columna
+
+# -----------------------------------------------------------------------------
+# -------------------- CREAR QQPLOT PARA REVISAR NORMALIDAD-------------------- 
+# -----------------------------------------------------------------------------
+
+def qq_plot(dataframe, nro_columnas_subplot, figsize_subplots, tamanio_fuente = 10, mostrar_ejes = True):
+    datos = dataframe.bfill().ffill()
+    encabezados_nuevos = dataframe.columns
+    nro_de_variables   = len(encabezados_nuevos)
+    tam                = nro_de_variables
+    filas              = int(tam / nro_columnas_subplot) if (tam % nro_columnas_subplot) == 0 else int(tam / nro_columnas_subplot) + 1                                   ########################################
+    
+    figure, axis = plt.subplots(nrows = filas, ncols = nro_de_variables,figsize=figsize_subplots )   
+    axis = axis.flatten() if nro_de_variables >1 else [axis]
+
+    for cont_i,col_i in enumerate(datos.columns):
+        sm.qqplot(datos[col_i],fit=True,line='45', ax = axis[cont_i])
+        axis[cont_i].legend([col_i], loc = 'lower right')
+        if mostrar_ejes:
+            axis[cont_i].set_xlabel('Cuantiles teóricos', fontsize=tamanio_fuente)
+            axis[cont_i].set_ylabel('Cuantiles de los datos', fontsize=tamanio_fuente)
+        else:
+            axis[cont_i].set_xlabel("")
+            axis[cont_i].set_ylabel("")
+    plt.tight_layout();
+    plt.show()
+
+# -----------------------------------------------------------------------------
+# ---------------- PRUEBAS DE HIPÓTESIS PARA REVISAR NORMALIDAD---------------- 
+# -----------------------------------------------------------------------------
+
+def test_kolmogorov_smirnov(dataframe, alpha = 0.05, verbose = False):
+    """
+    Evalúa la normalidad de una variable usando Kolmogorov-Smirnov.
+    H0: Los datos siguen una distribución normal.
+    H1: Los datos NO siguen una distribución normal.
+    """
+    print('- Función para determinar posible normalidad con el test Kolmogorov-Smirnov')
+
+    for col_i in dataframe.columns:
+        # Eliminar valores nulos si existen
+        datos_limpios = dataframe[col_i].dropna()
+        n = len(datos_limpios)
+ 
+        # Estandarizar los datos (media = 0, desviación estándar = 1)
+        media                = np.mean(datos_limpios)
+        desv_est             = np.std(datos_limpios, ddof=1)
+        datos_estandarizados = (datos_limpios - media) / desv_est
+            
+        estadistico_i, p_valor_i = stats.kstest(datos_estandarizados, 'norm')
+        es_normal = p_valor_i > alpha
+        
+        # Valor crítico aproximado de KS para alfa=0.05 (cuando n > 35)
+        valor_critico_5 = 1.36 / np.sqrt(n)
+        if verbose:
+            print('\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX VARIABLE ',col_i,'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+            print('Ho : La serie SI proviene de una distribución NORMAL')
+            print('HA : La serie NO proviene de una distribución NORMAL')
+            print(f'   Estadístico D         = {estadistico_i:.4f} (si D > valor crítico, se rechaza Ho)')
+            print(f'   Valor crítico (5%)    = {valor_critico_5 :.4f} (aproximado para n={n}); Este alor Crítico es aproximado de KS para alfa=0.05 (cuando n > 35)')
+            print(f'   P-valor               = {p_valor_i:.4f} (si p-valor < alpha({alpha}), se rechaza Ho)')
+            print(f'   Nro de observaciones  = {n}')
+            print(f'   Conclusión            = {"NORMAL" if es_normal else "NO NORMAL"}')
+
+
+
+def test_shapiro_wilk(dataframe, alpha = 0.05, verbose = False):
+    """
+    Evalúa la normalidad de una variable usando Shapiro-Wilk.
+    H0: Los datos siguen una distribución normal.
+    H1: Los datos NO siguen una distribución normal.
+    """
+    print('- Función para determinar posible normalidad con el test Shapiro-Wilk')
+
+    for col_i in dataframe.columns:
+        # Eliminar valores nulos si existen
+        datos_limpios = dataframe[col_i].dropna()
+        n = len(datos_limpios)
+        
+        estadistico_i, p_valor_i = stats.shapiro(datos_limpios)
+        es_normal = p_valor_i > alpha
+        
+        if verbose:
+            print('\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX VARIABLE ',col_i,'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+            print('Ho : La serie SI proviene de una distribución NORMAL')
+            print('HA : La serie NO proviene de una distribución NORMAL')
+            print(f'   Estadístico W         = {estadistico_i:.4f} (cercano a 1 indica normalidad)')
+            print(f'   P-valor               = {p_valor_i:.4f} (si p-valor < alpha({alpha}), se rechaza Ho)')
+            print(f'   Nro de observaciones  = {n}')
+            print(f'   Conclusión            = {"NORMAL" if es_normal else "NO NORMAL"}')
+
+
 
 # -----------------------------------------------------------------------------
 # -------------------- PARA CREAR UN MAPA DE CORRELACIONES -------------------- 
@@ -1778,8 +1872,8 @@ def test_dickey_fuller(dataframe):
     resultados = sts.adfuller(dataframe[i])
     print('\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX VARIABLE ',i,'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
     print('Ho : La serie NO es estacionaria\nHA : La serie SI es estacionaria')
-    print('   Estadístico de prueba = ',resultados[0],'(estad de prueba < valor crítico, entonces se rechaa la hipótesis nula)')
-    print('   P-valor               = ',resultados[1],'(         pvalor < alpha        , entonces se rechaa la hipótesis nula)')
+    print('   Estadístico de prueba = ',resultados[0],'(estad de prueba < valor crítico, entonces se rechaza la hipótesis nula)')
+    print('   P-valor               = ',resultados[1],'(         pvalor < alpha        , entonces se rechaza la hipótesis nula)')
     print('   Nro de lags           = ',resultados[2],'(estos son el número de retardos que mediante una regresión, se usaron para calcular el estadístico de prueba, cuando no hay autocorrelaciones, se regresa 0)')
     print('   Nro de observaciones  = ',resultados[3],'(número de observaciones usadas en el análisis)')
     print('alpha_1 =  1%    |    valor crítico_1 = -3.43\nalpha_2 =  5%    |    valor crítico_2 = -2.86\nalpha_3 = 10%    |    valor crítico_3 = -2.56')
