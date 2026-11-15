@@ -1514,6 +1514,8 @@ def configurar_parametros_ciclicos(param_color, param_grosor, param_forma):     
   if (param_color != False) | (param_grosor != False) | (param_forma != False):
     cantidad = len(param_color)
     ciclador  = []
+    estilos_linea = ['-', '--', '-.', ':', 'solid', 'dashed', 'dashdot', 'dotted', 'none', 'None', ' ', '']
+
     for i in range(cantidad):
         parametros = []
         if param_color  != False:
@@ -1521,8 +1523,10 @@ def configurar_parametros_ciclicos(param_color, param_grosor, param_forma):     
         if param_grosor != False:
           parametros.append( cycler(lw        = [str(param_grosor[i])] ))       # Acá se configurará el ancho de cada gráfica
         if param_forma  != False:
-          parametros.append( cycler(linestyle =  [param_forma[i]]      ))       # Acá se configurará la forma de cada gráfica
-
+          if param_forma[i] in estilos_linea:
+            parametros.append( cycler(linestyle =  [param_forma[i]] ))       # Acá se configurará la forma de cada gráfica
+          else:
+            parametros.append( cycler(marker    =  [param_forma[i]] )) 
         for cont, param_i in enumerate(parametros):
           suma_ciclador = (suma_ciclador + param_i) if cont != 0 else param_i
         
